@@ -4,19 +4,19 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { MemberType } from '../../libs/enums/member.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UseGuards } from '@nestjs/common';
-import { Properties, Property } from '../../libs/dto/property/property';
+import { Properties, Property } from '../../libs/dto/car/car';
 import {
 	AgentPropertiesInquiry,
 	AllPropertiesInquiry,
 	OrdinaryInquiry,
 	PropertiesInquiry,
 	PropertyInput,
-} from '../../libs/dto/property/property.input';
+} from '../../libs/dto/car/car.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
-import { PropertyUpdate } from '../../libs/dto/property/property.update';
+import { PropertyUpdate } from '../../libs/dto/car/car.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Resolver()

@@ -2,12 +2,14 @@ import { ObjectId } from 'bson';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { T } from './types/common';
+import { CarOptions } from './enums/car.enum';
 
 export const availableAgentSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews', 'memberRank'];
 export const availableMemberSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews'];
 
 export const availableOptions = ["carBarter, 'carRent"];
-export const availablePropertySorts = [
+export const availableCarOptions = Object.values(CarOptions);
+export const availableCarSorts = [
 	'createdAt',
 	'carRank',
 	'carViews',

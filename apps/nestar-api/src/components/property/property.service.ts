@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AuthService } from '../auth/auth.service';
 import { ViewService } from '../view/view.service';
 import { Model, ObjectId } from 'mongoose';
-import { Properties, Property } from '../../libs/dto/property/property';
+import { Properties, Property } from '../../libs/dto/car/car';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import {
 	AgentPropertiesInquiry,
@@ -11,13 +11,13 @@ import {
 	OrdinaryInquiry,
 	PropertiesInquiry,
 	PropertyInput,
-} from '../../libs/dto/property/property.input';
+} from '../../libs/dto/car/car.input';
 import { MemberService } from '../member/member.service';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { CarStatus } from '../../libs/enums/car.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
-import { PropertyUpdate } from '../../libs/dto/property/property.update';
+import { PropertyUpdate } from '../../libs/dto/car/car.update';
 import * as moment from 'moment';
 import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';

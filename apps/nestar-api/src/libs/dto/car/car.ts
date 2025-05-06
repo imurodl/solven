@@ -1,59 +1,74 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ObjectId } from 'mongoose';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
-import { CarLocation, CarStatus, CarType } from '../../enums/car.enum';
+import { CarColor, CarFuelType, CarLocation, CarOptions, CarStatus, CarTransmission, CarType } from '../../enums/car.enum';
 import { Member, TotalCounter } from '../member/member';
 import { MeLiked } from '../like/like';
 
 @ObjectType()
-export class Property {
+export class Car {
 	@Field(() => String)
 	_id: ObjectId;
 
 	@Field(() => CarType)
-	propertyType: CarType;
+	carType: CarType;
 
 	@Field(() => CarStatus)
-	propertyStatus: CarStatus;
+	carStatus: CarStatus;
 
 	@Field(() => CarLocation)
-	propertyLocation: CarLocation;
+	carLocation: CarLocation;
 
 	@Field(() => String)
-	propertyAddress: string;
+	carAddress: string;
 
 	@Field(() => String)
-	propertyTitle: string;
+	carBrand: string;
+
+	@Field(() => String)
+	carModel: string;
+
+	@Field(() => String)
+	carTitle: string;
 
 	@Field(() => Number)
-	propertyPrice: number;
+	carPrice: number;
 
-	@Field(() => Number)
-	propertySquare: number;
+	@Field(() => CarFuelType)
+	carFuelType: CarFuelType;
 
-	@Field(() => Int)
-	propertyBeds: number;
+	@Field(() => CarTransmission)
+	carTransmission: CarTransmission;
 
-	@Field(() => Int)
-	propertyRooms: number;
+	@Field(() => [CarOptions])
+	carOptions: CarOptions[];
 
-	@Field(() => Int)
-	propertyViews: number;
-
-	@Field(() => Int)
-	propertyLikes: number;
+	@Field(() => CarColor)
+	carColor: CarColor;
 
 	@Field(() => Int)
-	propertyComments: number;
+	carMileage: number;
 
 	@Field(() => Int)
-	propertyRank: number;
+	carSeats: number;
+
+	@Field(() => Int)
+	carViews: number;
+
+	@Field(() => Int)
+	carLikes: number;
+
+	@Field(() => Int)
+	carComments: number;
+
+	@Field(() => Int)
+	carRank: number;
 
 	@Field(() => [String])
-	propertyImages: string[];
+	carImages: string[];
 
 	@Field(() => String, { nullable: true })
-	propertyDesc: string;
+	carDesc: string;
 
 	@Field(() => Boolean)
 	carBarter: boolean;
@@ -71,7 +86,7 @@ export class Property {
 	deletedAt: Date;
 
 	@Field(() => Date, { nullable: true })
-	constructedAt: Date;
+	manufacturedAt: Date;
 
 	@Field(() => Date)
 	createdAt: Date;
@@ -85,13 +100,13 @@ export class Property {
 	memberData?: Member;
 
 	@Field(() => [MeLiked], { nullable: true })
-	meLiked: MeLiked[];
+	meLiked?: MeLiked[];
 }
 
 @ObjectType()
-export class Properties {
-	@Field(() => [Property])
-	list: Property[];
+export class Cars {
+	@Field(() => [Car])
+	list: Car[];
 
 	@Field(() => [TotalCounter], { nullable: true })
 	metaCounter: TotalCounter[];

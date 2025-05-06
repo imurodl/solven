@@ -2,13 +2,13 @@ import { Schema } from 'mongoose';
 
 const CarBrandSchema = new Schema(
 	{
-		brandName: {
+		carBrandName: {
 			type: String,
 			required: true,
 			unique: true,
 		},
 
-		carModels: {
+		carBrandModels: {
 			type: [String],
 			required: true,
 		},

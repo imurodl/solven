@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
-import PropertySchema from 'apps/nestar-api/src/schemas/Property.model';
+import CarSchema from 'apps/nestar-api/src/schemas/Car.model';
 import MemberSchema from 'apps/nestar-api/src/schemas/Member.model';
 
 @Module({
@@ -13,7 +13,7 @@ import MemberSchema from 'apps/nestar-api/src/schemas/Member.model';
 		ConfigModule.forRoot(),
 		DatabaseModule,
 		ScheduleModule.forRoot(),
-		MongooseModule.forFeature([{ name: 'Property', schema: PropertySchema }]),
+		MongooseModule.forFeature([{ name: 'Property', schema: CarSchema }]),
 		MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]),
 	],
 	controllers: [BatchController],

@@ -1,0 +1,96 @@
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum CarType {
+	LIGHT = 'LIGHT', // 경차
+	COMPACT = 'COMPACT', // 소형차
+	MIDSIZE = 'MIDSIZE', // 중형차
+	LARGE = 'LARGE', // 대형차
+	SUV = 'SUV',
+	TRUCK = 'TRUCK',
+	OTHER = 'OTHER',
+}
+registerEnumType(CarType, {
+	name: 'CarType',
+});
+
+export enum CarStatus {
+	ACTIVE = 'ACTIVE',
+	SOLD = 'SOLD',
+	DELETE = 'DELETE',
+}
+registerEnumType(CarStatus, {
+	name: 'CarStatus',
+});
+
+export enum CarLocation {
+	SEOUL = 'SEOUL',
+	BUSAN = 'BUSAN',
+	INCHEON = 'INCHEON',
+	DAEGU = 'DAEGU',
+	GYEONGJU = 'GYEONGJU',
+	GWANGJU = 'GWANGJU',
+	CHONJU = 'CHONJU',
+	DAEJON = 'DAEJON',
+	JEJU = 'JEJU',
+}
+registerEnumType(CarLocation, {
+	name: 'CarLocation',
+});
+
+export enum CarFuelType {
+	GASOLINE = 'GASOLINE',
+	DIESEL = 'DIESEL',
+	LPG = 'LPG',
+	HYBRID = 'HYBRID',
+	ELECTRIC = 'ELECTRIC',
+	HYDROGEN = 'HYDROGEN',
+	OTHER = 'OTHER',
+}
+registerEnumType(CarFuelType, { name: 'CarFuelType' });
+
+export enum CarOptions {
+	HEATED_SEATS = 'HEATED_SEATS',
+	VENTILATED_SEATS = 'VENTILATED_SEATS',
+	POWER_SEATS = 'POWER_SEATS',
+	LEATHER_SEATS = 'LEATHER_SEATS',
+	HEATED_STEERING = 'HEATED_STEERING',
+	SMART_KEY = 'SMART_KEY',
+	CRUISE_CONTROL = 'CRUISE_CONTROL',
+	NAVIGATION = 'NAVIGATION',
+	PARKING_SENSOR_REAR = 'PARKING_SENSOR_REAR',
+	PARKING_SENSOR_FRONT = 'PARKING_SENSOR_FRONT',
+	REAR_CAMERA = 'REAR_CAMERA',
+	CAMERA_360 = 'CAMERA_360',
+	SUNROOF = 'SUNROOF',
+	BLACK_BOX = 'BLACK_BOX',
+	LANE_KEEP_ASSIST = 'LANE_KEEP_ASSIST',
+	BLIND_SPOT_WARNING = 'BLIND_SPOT_WARNING',
+	AUTO_BRAKING = 'AUTO_BRAKING',
+	TWO_KEYS = 'TWO_KEYS',
+	NON_SMOKER = 'NON_SMOKER',
+}
+registerEnumType(CarOptions, { name: 'CarOptions' });
+
+export enum CarColor {
+	WHITE = 'WHITE',
+	BLACK = 'BLACK',
+	GRAY = 'GRAY',
+	SILVER = 'SILVER',
+	BLUE = 'BLUE',
+	RED = 'RED',
+	GREEN = 'GREEN',
+	YELLOW = 'YELLOW',
+	ORANGE = 'ORANGE',
+	BROWN = 'BROWN',
+	PURPLE = 'PURPLE',
+	GOLD = 'GOLD',
+	BEIGE = 'BEIGE',
+	OTHER = 'OTHER',
+}
+registerEnumType(CarColor, { name: 'CarColor' });
+
+export enum CarTransmission {
+	AUTOMATIC = 'AUTOMATIC',
+	MANUAL = 'MANUAL',
+}
+registerEnumType(CarTransmission, { name: 'CarTransmission' });

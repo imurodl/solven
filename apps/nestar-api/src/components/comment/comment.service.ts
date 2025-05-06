@@ -4,7 +4,7 @@ import { Model, ObjectId } from 'mongoose';
 import { Comment, Comments } from '../../libs/dto/comment/comment';
 import { MemberService } from '../member/member.service';
 import { ViewService } from '../view/view.service';
-import { PropertyService } from '../property/property.service';
+import { CarService } from '../car/car.service';
 import { BoardArticleService } from '../board-article/board-article.service';
 import { CommentInput, CommentsInquiry } from '../../libs/dto/comment/comment.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
@@ -18,7 +18,7 @@ export class CommentService {
 	constructor(
 		@InjectModel('Comment') private readonly commentModel: Model<Comment>,
 		private memberService: MemberService,
-		private propertyService: PropertyService,
+		private carService: CarService,
 		private boardArticleService: BoardArticleService,
 	) {}
 
@@ -42,7 +42,7 @@ export class CommentService {
 				});
 				break;
 			case CommentGroup.PROPERTY:
-				await this.propertyService.propertyStatsEditor({
+				await this.carService.carStatsEditor({
 					_id: input.commentRefId,
 					targetKey: 'propertyComments',
 					modifier: 1,

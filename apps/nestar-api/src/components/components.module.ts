@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MemberModule } from './member/member.module';
-import { PropertyModule } from './property/property.module';
+import { CarModule } from './car/car.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentModule } from './comment/comment.module';
 import { LikeModule } from './like/like.module';
@@ -13,7 +13,7 @@ import { CarBrandModule } from './car-brand/car-brand.module';
 	imports: [
 		MemberModule,
 		AuthModule,
-		PropertyModule,
+		CarModule,
 		BoardArticleModule,
 		CommentModule,
 		LikeModule,

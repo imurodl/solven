@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PropertyResolver } from './property.resolver';
-import { PropertyService } from './property.service';
+import { CarResolver } from './car.resolver';
+import { CarService } from './car.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import CarSchema from '../../schemas/Car.model';
 import { AuthModule } from '../auth/auth.module';
@@ -16,7 +16,7 @@ import { LikeModule } from '../like/like.module';
 		MemberModule,
 		LikeModule,
 	],
-	providers: [PropertyResolver, PropertyService],
-	exports: [PropertyService],
+	providers: [CarResolver, CarService],
+	exports: [CarService],
 })
-export class PropertyModule {}
+export class CarModule {}

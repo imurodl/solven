@@ -14,7 +14,7 @@ import {
 } from '../../libs/dto/property/property.input';
 import { MemberService } from '../member/member.service';
 import { StatisticModifier, T } from '../../libs/types/common';
-import { PropertyStatus } from '../../libs/enums/car.enum';
+import { CarStatus } from '../../libs/enums/car.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
@@ -38,7 +38,7 @@ export class PropertyService {
 			const result: Property = await this.propertyModel.create(input);
 			await this.memberService.memberStatsEditor({
 				_id: result.memberId,
-				targetKey: 'memberProperties',
+				targetKey: 'memberCars',
 				modifier: 1,
 			});
 			return result;
@@ -51,7 +51,7 @@ export class PropertyService {
 	public async getProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
 		const search: T = {
 			_id: propertyId,
-			propertyStatus: PropertyStatus.ACTIVE,
+			propertyStatus: CarStatus.ACTIVE,
 		};
 		const targetProperty: Property | null = await this.propertyModel.findOne(search).lean().exec();
 		if (!targetProperty) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
@@ -81,11 +81,11 @@ export class PropertyService {
 		const search: T = {
 			_id: input._id,
 			memberId: memberId,
-			propertyStatus: PropertyStatus.ACTIVE,
+			propertyStatus: CarStatus.ACTIVE,
 		};
 
-		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
-		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+		if (propertyStatus === CarStatus.SOLD) soldAt = moment().toDate();
+		else if (propertyStatus === CarStatus.DELETE) deletedAt = moment().toDate();
 
 		const result: Property | null = await this.propertyModel.findOneAndUpdate(search, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
@@ -93,7 +93,7 @@ export class PropertyService {
 		if (soldAt || deletedAt) {
 			await this.memberService.memberStatsEditor({
 				_id: memberId,
-				targetKey: 'memberProperties',
+				targetKey: 'memberCars',
 				modifier: -1,
 			});
 		}
@@ -102,7 +102,7 @@ export class PropertyService {
 	}
 
 	public async getProperties(memberId: ObjectId, input: PropertiesInquiry): Promise<Properties> {
-		const match: T = { propertyStatus: PropertyStatus.ACTIVE };
+		const match: T = { propertyStatus: CarStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		this.shapeMatchQuery(match, input);
@@ -141,11 +141,11 @@ export class PropertyService {
 
 	public async getAgentProperties(memberId: ObjectId, input: AgentPropertiesInquiry): Promise<Properties> {
 		const { propertyStatus } = input.search;
-		if (propertyStatus === PropertyStatus.DELETE) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
+		if (propertyStatus === CarStatus.DELETE) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
 
 		const match: T = {
 			memberId: memberId,
-			propertyStatus: propertyStatus ?? { $ne: PropertyStatus.DELETE },
+			propertyStatus: propertyStatus ?? { $ne: CarStatus.DELETE },
 		};
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
@@ -173,7 +173,7 @@ export class PropertyService {
 
 	public async likeTargetProperty(memberId: ObjectId, likeRefId: ObjectId): Promise<Property> {
 		const target: Property | null = await this.propertyModel
-			.findOne({ _id: likeRefId, propertyStatus: PropertyStatus.ACTIVE })
+			.findOne({ _id: likeRefId, propertyStatus: CarStatus.ACTIVE })
 			.exec();
 		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
@@ -228,11 +228,11 @@ export class PropertyService {
 		let { propertyStatus, soldAt, deletedAt } = input;
 		const search: T = {
 			_id: input._id,
-			propertyStatus: PropertyStatus.ACTIVE,
+			propertyStatus: CarStatus.ACTIVE,
 		};
 
-		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
-		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+		if (propertyStatus === CarStatus.SOLD) soldAt = moment().toDate();
+		else if (propertyStatus === CarStatus.DELETE) deletedAt = moment().toDate();
 
 		const result: Property | null = await this.propertyModel.findOneAndUpdate(search, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
@@ -240,7 +240,7 @@ export class PropertyService {
 		if (soldAt || deletedAt) {
 			await this.memberService.memberStatsEditor({
 				_id: result.memberId,
-				targetKey: 'memberProperties',
+				targetKey: 'memberCars',
 				modifier: -1,
 			});
 		}
@@ -249,7 +249,7 @@ export class PropertyService {
 	}
 
 	public async removePropertyByAdmin(propertyd: string): Promise<Property> {
-		const search: T = { _id: propertyd, propertyStatus: PropertyStatus.DELETE };
+		const search: T = { _id: propertyd, propertyStatus: CarStatus.DELETE };
 		const result: Property | null = await this.propertyModel.findOneAndDelete(search).exec();
 		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
 

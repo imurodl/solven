@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Member, Members } from 'apps/nestar-api/src/libs/dto/member/member';
 import { Property } from 'apps/nestar-api/src/libs/dto/property/property';
 import { MemberStatus, MemberType } from 'apps/nestar-api/src/libs/enums/member.enum';
-import { PropertyStatus } from 'apps/nestar-api/src/libs/enums/car.enum';
+import { CarStatus } from 'apps/nestar-api/src/libs/enums/car.enum';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class BatchService {
 	public async batchRollback(): Promise<void> {
 		await this.propertyModel
 			.updateMany(
-				{ propertyStatus: PropertyStatus.ACTIVE },
+				{ propertyStatus: CarStatus.ACTIVE },
 				{ propertyRank: 0 }, //
 			)
 			.exec();
@@ -31,7 +31,7 @@ export class BatchService {
 
 	public async batchTopProperties(): Promise<void> {
 		const properties: Property[] = await this.propertyModel
-			.find({ propertyStatus: PropertyStatus.ACTIVE, propertyRank: 0 })
+			.find({ propertyStatus: CarStatus.ACTIVE, propertyRank: 0 })
 			.exec();
 
 		const promisedList = properties.map(async (ele: Property) => {
@@ -48,8 +48,8 @@ export class BatchService {
 			.exec();
 
 		const promisedList = agents.map(async (ele: Member) => {
-			const { _id, memberArticles, memberViews, memberLikes, memberProperties } = ele;
-			const rank = memberProperties * 5 + memberArticles * 3 + memberLikes * 2 + memberViews * 1;
+			const { _id, memberArticles, memberViews, memberLikes, memberCars } = ele;
+			const rank = memberCars * 5 + memberArticles * 3 + memberLikes * 2 + memberViews * 1;
 			return await this.propertyModel.findByIdAndUpdate(_id, { propertyRank: rank });
 		});
 		await Promise.all(promisedList);

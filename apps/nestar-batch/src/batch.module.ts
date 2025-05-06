@@ -13,7 +13,7 @@ import MemberSchema from 'apps/nestar-api/src/schemas/Member.model';
 		ConfigModule.forRoot(),
 		DatabaseModule,
 		ScheduleModule.forRoot(),
-		MongooseModule.forFeature([{ name: 'Property', schema: CarSchema }]),
+		MongooseModule.forFeature([{ name: 'Car', schema: CarSchema }]),
 		MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]),
 	],
 	controllers: [BatchController],

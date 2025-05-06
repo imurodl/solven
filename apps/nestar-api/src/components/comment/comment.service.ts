@@ -41,10 +41,10 @@ export class CommentService {
 					modifier: 1,
 				});
 				break;
-			case CommentGroup.PROPERTY:
+			case CommentGroup.CAR:
 				await this.carService.carStatsEditor({
 					_id: input.commentRefId,
-					targetKey: 'propertyComments',
+					targetKey: 'carComments',
 					modifier: 1,
 				});
 				break;

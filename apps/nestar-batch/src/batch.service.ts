@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Member, Members } from 'apps/nestar-api/src/libs/dto/member/member';
-import { Property } from 'apps/nestar-api/src/libs/dto/car/car';
+import { Car } from 'apps/nestar-api/src/libs/dto/car/car';
 import { MemberStatus, MemberType } from 'apps/nestar-api/src/libs/enums/member.enum';
 import { CarStatus } from 'apps/nestar-api/src/libs/enums/car.enum';
 import { Model } from 'mongoose';
@@ -9,15 +9,15 @@ import { Model } from 'mongoose';
 @Injectable()
 export class BatchService {
 	constructor(
-		@InjectModel('Property') private readonly propertyModel: Model<Property>,
+		@InjectModel('Car') private readonly carModel: Model<Car>,
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 	) {}
 
 	public async batchRollback(): Promise<void> {
-		await this.propertyModel
+		await this.carModel
 			.updateMany(
-				{ propertyStatus: CarStatus.ACTIVE },
-				{ propertyRank: 0 }, //
+				{ carStatus: CarStatus.ACTIVE },
+				{ carRank: 0 }, //
 			)
 			.exec();
 
@@ -30,14 +30,14 @@ export class BatchService {
 	}
 
 	public async batchTopProperties(): Promise<void> {
-		const properties: Property[] = await this.propertyModel
-			.find({ propertyStatus: CarStatus.ACTIVE, propertyRank: 0 })
+		const cars: Car[] = await this.carModel
+			.find({ carStatus: CarStatus.ACTIVE, carRank: 0 })
 			.exec();
 
-		const promisedList = properties.map(async (ele: Property) => {
-			const { _id, propertyLikes, propertyViews } = ele;
-			const rank = propertyLikes * 2 + propertyViews * 1;
-			return await this.propertyModel.findByIdAndUpdate(_id, { propertyRank: rank });
+		const promisedList = cars.map(async (ele: Car) => {
+			const { _id, carLikes, carViews } = ele;
+			const rank = carLikes * 2 + carViews * 1;
+			return await this.carModel.findByIdAndUpdate(_id, { carRank: rank });
 		});
 		await Promise.all(promisedList);
 	}
@@ -50,7 +50,7 @@ export class BatchService {
 		const promisedList = agents.map(async (ele: Member) => {
 			const { _id, memberArticles, memberViews, memberLikes, memberCars } = ele;
 			const rank = memberCars * 5 + memberArticles * 3 + memberLikes * 2 + memberViews * 1;
-			return await this.propertyModel.findByIdAndUpdate(_id, { propertyRank: rank });
+			return await this.carModel.findByIdAndUpdate(_id, { carRank: rank });
 		});
 		await Promise.all(promisedList);
 	}

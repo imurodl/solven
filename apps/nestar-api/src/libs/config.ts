@@ -6,13 +6,13 @@ import { T } from './types/common';
 export const availableAgentSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews', 'memberRank'];
 export const availableMemberSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews'];
 
-export const availableOptions = ["propertyBarter, 'propertyRent"];
+export const availableOptions = ["carBarter, 'carRent"];
 export const availablePropertySorts = [
 	'createdAt',
-	'propertyRank',
-	'propertyViews',
-	'propertyLikes',
-	'propertyPrice',
+	'carRank',
+	'carViews',
+	'carLikes',
+	'carPrice',
 	'updatedAt',
 ];
 

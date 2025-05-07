@@ -128,7 +128,7 @@ export class YearRange {
 }
 
 @InputType()
-class CISearch {
+class CarsISearch {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	memberId?: ObjectId;
@@ -162,8 +162,14 @@ class CISearch {
 	modelList?: string[];
 
 	@IsOptional()
+	@IsIn(availableCarOptions, { each: true })
 	@Field(() => [CarOptions], { nullable: true })
-	options?: CarOptions[];
+	carOptions?: CarOptions[];
+
+	@IsOptional()
+	@IsIn(availableOptions, { each: true })
+	@Field(() => [String], { nullable: true })
+	carListingptions?: string[];
 
 	@IsOptional()
 	@Field(() => PricesRange, { nullable: true })
@@ -204,8 +210,8 @@ export class CarsInquiry {
 	direction?: Direction;
 
 	@IsNotEmpty()
-	@Field(() => CISearch)
-	search: CISearch;
+	@Field(() => CarsISearch)
+	search: CarsISearch;
 }
 
 @InputType()

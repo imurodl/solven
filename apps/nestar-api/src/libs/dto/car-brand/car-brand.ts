@@ -18,18 +18,14 @@ export class CarBrandInput {
 @InputType()
 export class CarBrandUpdate {
 	@IsNotEmpty()
-	@Field(() => String)
-	_id: ObjectId;
-
-	@IsOptional()
 	@Length(2, 50)
-	@Field(() => String, { nullable: true })
-	carBrandName?: string;
+	@Field(() => String)
+	carBrandName: string;
 
-	@IsOptional()
-	@IsArray()
-	@Field(() => [String], { nullable: true })
-	carBrandModels?: string[];
+	@IsNotEmpty()
+	@Length(2, 50)
+	@Field(() => String)
+	carBrandModel: string;
 }
 
 @ObjectType()

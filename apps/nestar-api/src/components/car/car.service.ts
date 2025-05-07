@@ -125,6 +125,54 @@ export class CarService {
 		return result[0];
 	}
 
+	private shapeMatchQuery(match: T, input: CarsInquiry): void {
+		const {
+			memberId,
+			locationList,
+			brandList,
+			modelList,
+			typeList,
+			fuelTypeList,
+			transmissionList,
+			colorList,
+			carOptions,
+			carListingptions,
+			pricesRange,
+			mileageRange,
+			yearRange,
+			text,
+		} = input.search;
+
+		if (memberId) match.memberId = shapeIntoMongoObjectId(memberId);
+		if (locationList && locationList.length) match.carLocation = { $in: locationList };
+		if (brandList && brandList.length) match.carBrand = { $in: brandList };
+		if (modelList && modelList.length) match.carModel = { $in: modelList };
+		if (typeList && typeList.length) match.carType = { $in: typeList };
+		if (fuelTypeList && fuelTypeList.length) match.carFuelType = { $in: fuelTypeList };
+		if (transmissionList && transmissionList.length) match.carTransmission = { $in: transmissionList };
+		if (colorList && colorList.length) match.carColor = { $in: colorList };
+
+		if (pricesRange) match.carPrice = { $gte: pricesRange.start, $lte: pricesRange.end };
+		if (mileageRange) match.carMileage = { $gte: mileageRange.start, $lte: mileageRange.end };
+		if (yearRange)
+			match.manufacturedAt = {
+				$gte: new Date(`${yearRange.start}-01-01`),
+				$lte: new Date(`${yearRange.end}-12-31`),
+			};
+
+		if (text) match.carTitle = { $regex: new RegExp(text, 'i') };
+
+		if (carOptions?.length) {
+			match.carOptions = { $all: carOptions };
+		}
+
+		if (carListingptions?.length) {
+			match['$or'] = carListingptions.map((option) => {
+				return { [option]: true };
+			});
+		}
+	}
+
 	public async getFavorites(memberId: ObjectId, input: OrdinaryInquiry): Promise<Cars> {
 		return await this.likeService.getFavoriteCars(memberId, input);
 	}
@@ -248,52 +296,19 @@ export class CarService {
 		return result;
 	}
 
-	private shapeMatchQuery(match: T, input: CarsInquiry): void {
-		const {
-			memberId,
-			locationList,
-			brandList,
-			modelList,
-			typeList,
-			fuelTypeList,
-			transmissionList,
-			colorList,
-			options,
-			pricesRange,
-			mileageRange,
-			yearRange,
-			text,
-		} = input.search;
-
-		if (memberId) match.memberId = shapeIntoMongoObjectId(memberId);
-		if (locationList && locationList.length) match.carLocation = { $in: locationList };
-		if (brandList && brandList.length) match.carBrand = { $in: brandList };
-		if (modelList && modelList.length) match.carModel = { $in: modelList };
-		if (typeList && typeList.length) match.carType = { $in: typeList };
-		if (fuelTypeList && fuelTypeList.length) match.carFuelType = { $in: fuelTypeList };
-		if (transmissionList && transmissionList.length) match.carTransmission = { $in: transmissionList };
-		if (colorList && colorList.length) match.carColor = { $in: colorList };
-
-		if (pricesRange) match.carPrice = { $gte: pricesRange.start, $lte: pricesRange.end };
-
-		if (mileageRange) match.carMileage = { $gte: mileageRange.start, $lte: mileageRange.end };
-
-		if (yearRange)
-			match.manufacturedAt = {
-				$gte: new Date(`${yearRange.start}-01-01`),
-				$lte: new Date(`${yearRange.end}-12-31`),
-			};
-
-		if (text) match.carTitle = { $regex: new RegExp(text, 'i') };
-
-		if (options?.length) {
-			match['$or'] = options.map((option) => ({
-				carOptions: option,
-			}));
-		}
-	}
-
 	public async carStatsEditor({ _id, targetKey, modifier }: StatisticModifier): Promise<Car | null> {
-		return await this.carModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
+		return await this.carModel
+			.findByIdAndUpdate(
+				_id,
+				{
+					$inc: {
+						[targetKey]: modifier,
+					},
+				},
+				{
+					new: true,
+				},
+			)
+			.exec();
 	}
 }

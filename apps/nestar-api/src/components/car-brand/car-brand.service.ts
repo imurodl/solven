@@ -12,7 +12,7 @@ export class CarBrandService {
 	public async createCarBrand(input: CarBrandInput): Promise<CarBrand> {
 		const createInput: T = {
 			carBrandName: input.carBrandName.trim().toUpperCase(),
-			carBrandModels: input.carBrandModels.map((brandModel) => brandModel.trim().toUpperCase()),
+			carBrandModels: input.carBrandModels.map((brandModel) => brandModel.trim()),
 		};
 
 		const exists: CarBrand | null = await this.carBrandModel.findOne({
@@ -40,24 +40,30 @@ export class CarBrandService {
 	}
 
 	public async addCarBrandModel(input: CarBrandUpdate): Promise<CarBrand> {
+		const name = input.carBrandName.trim().toUpperCase(); // normalize brand name
+		const model = input.carBrandModel.trim(); // keep casing as user enters
+
+		const targetCarBrand = await this.carBrandModel.findOne({ carBrandName: name }).exec();
+		if (!targetCarBrand) throw new BadRequestException(Message.NO_DATA_FOUND);
+
+		if (targetCarBrand.carBrandModels.includes(model)) {
+			throw new BadRequestException(Message.UPDATE_FAILED);
+		}
+
+		targetCarBrand.carBrandModels.push(model);
+		await targetCarBrand.save();
+
+		return targetCarBrand;
+	}
+
+	public async deleteCarBrandModel(input: CarBrandUpdate): Promise<CarBrand> {
 		const name = input.carBrandName.trim().toUpperCase();
-		const model = input.carBrandModel.trim().toUpperCase();
+		const model = input.carBrandModel.trim();
 
 		const result = await this.carBrandModel
-			.findOneAndUpdate(
-				{
-					carBrandName: name,
-				},
-				{
-					$addToSet: {
-						carBrandModels: model,
-					},
-				},
-				{
-					new: true,
-				},
-			)
+			.findOneAndUpdate({ carBrandName: name }, { $pull: { carBrandModels: model } }, { new: true })
 			.exec();
+
 		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 		return result;
 	}

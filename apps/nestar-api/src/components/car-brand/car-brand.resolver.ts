@@ -42,6 +42,14 @@ export class CarBrandResolver {
 		return await this.carBrandService.addCarBrandModel(input);
 	}
 
+  @Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => CarBrand)
+	public async deleteCarBrandModel(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
+		console.log('Mutation: deleteCarBrandModel');
+		return await this.carBrandService.deleteCarBrandModel(input);
+	}
+
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)

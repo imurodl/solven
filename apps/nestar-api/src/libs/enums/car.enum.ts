@@ -94,3 +94,13 @@ export enum CarTransmission {
 	MANUAL = 'MANUAL',
 }
 registerEnumType(CarTransmission, { name: 'CarTransmission' });
+
+
+export enum CarBrandStatus {
+	ACTIVE = 'ACTIVE',
+	PAUSED = 'PAUSED',
+	DELETE = 'DELETE',
+}
+registerEnumType(CarBrandStatus, {
+	name: 'CarBrandStatus',
+});

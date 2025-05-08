@@ -4,11 +4,27 @@ import { MemberType } from '../../libs/enums/member.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { CarBrand, CarBrandInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
+import { CarBrand, CarBrandInput, CarBrandModelInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
+import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
 export class CarBrandResolver {
 	constructor(private readonly carBrandService: CarBrandService) {}
+
+	@UseGuards(WithoutGuard)
+	@UseGuards(RolesGuard)
+	@Query(() => CarBrand)
+	public async getCarBrandByUser(@Args('input') input: string): Promise<CarBrand> {
+		console.log('Query: getCarBrandByUser');
+		return await this.carBrandService.getCarBrandByUser(input);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query(() => [CarBrand])
+	public async getCarBrandsByUser(): Promise<CarBrand[]> {
+		console.log('Query: getCarBrandsByUser');
+		return await this.carBrandService.getCarBrandsByUser();
+	}
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
@@ -22,7 +38,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Query(() => CarBrand)
 	public async getCarBrand(@Args('input') input: string): Promise<CarBrand> {
-		console.log('Mutation: getCarBrand');
+		console.log('Query: getCarBrand');
 		return await this.carBrandService.getCarBrand(input);
 	}
 
@@ -30,7 +46,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Query(() => [CarBrand])
 	public async getAllCarBrands(): Promise<CarBrand[]> {
-		console.log('Mutation: getAllCarBrands');
+		console.log('Query: getAllCarBrands');
 		return await this.carBrandService.getAllCarBrands();
 	}
 
@@ -39,13 +55,13 @@ export class CarBrandResolver {
 	@Mutation(() => CarBrand)
 	public async addCarBrandModel(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
 		console.log('Mutation: addCarBrandModel');
-		return await this.carBrandService.addCarBrandModel(input);
+		return await this.carBrandService.updateCarBrand(input);
 	}
 
-  @Roles(MemberType.ADMIN)
+	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
-	public async deleteCarBrandModel(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
+	public async deleteCarBrandModel(@Args('input') input: CarBrandModelInput): Promise<CarBrand> {
 		console.log('Mutation: deleteCarBrandModel');
 		return await this.carBrandService.deleteCarBrandModel(input);
 	}

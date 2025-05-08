@@ -1,6 +1,7 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsOptional, IsNotEmpty, Length, ArrayNotEmpty, IsArray } from 'class-validator';
 import { ObjectId } from 'mongoose';
+import { CarBrandStatus } from '../../enums/car.enum';
 
 @InputType()
 export class CarBrandInput {
@@ -22,10 +23,27 @@ export class CarBrandUpdate {
 	@Field(() => String)
 	carBrandName: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@Length(2, 50)
-	@Field(() => String)
-	carBrandModel: string;
+	@Field(() => String, { nullable: true })
+	carBrandModel?: string;
+
+	@IsOptional()
+	@Field(() => CarBrandStatus, { nullable: true })
+	carBrandStatus?: CarBrandStatus;
+}
+
+@InputType()
+export class CarBrandModelInput {
+  @IsNotEmpty()
+  @Length(2, 50)
+  @Field(() => String)
+  carBrandName: string;
+
+  @IsNotEmpty()
+  @Length(2, 50)
+  @Field(() => String)
+  carBrandModel: string;
 }
 
 @ObjectType()
@@ -38,6 +56,9 @@ export class CarBrand {
 
 	@Field(() => [String])
 	carBrandModels: string[];
+
+	@Field(() => CarBrandStatus)
+	carBrandStatus: CarBrandStatus;
 
 	@Field(() => Date)
 	createdAt: Date;

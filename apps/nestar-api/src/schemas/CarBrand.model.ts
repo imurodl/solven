@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { CarBrandStatus } from '../libs/enums/car.enum';
 
 const CarBrandSchema = new Schema(
 	{
@@ -6,6 +7,12 @@ const CarBrandSchema = new Schema(
 			type: String,
 			required: true,
 			unique: true,
+		},
+
+		carBrandStatus: {
+			type: String,
+			enum: CarBrandStatus,
+			default: CarBrandStatus.ACTIVE,
 		},
 
 		carBrandModels: {

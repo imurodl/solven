@@ -1,13 +1,28 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CarBrand, CarBrandInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
+import { CarBrand, CarBrandInput, CarBrandModelInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
 import { Message } from '../../libs/enums/common.enum';
 import { T } from '../../libs/types/common';
+import { CarBrandStatus } from '../../libs/enums/car.enum';
 
 @Injectable()
 export class CarBrandService {
 	constructor(@InjectModel('CarBrand') private readonly carBrandModel: Model<CarBrand>) {}
+
+	public async getCarBrandByUser(input: string): Promise<CarBrand> {
+		const match: T = {
+			carBrandName: input.trim().toUpperCase(),
+			carBrandStatus: CarBrandStatus.ACTIVE,
+		};
+		const result = await this.carBrandModel.findOne(match).exec();
+		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
+		return result;
+	}
+
+	public async getCarBrandsByUser(): Promise<CarBrand[]> {
+		return this.carBrandModel.find({ carBrandStatus: CarBrandStatus.ACTIVE }).sort({ carBrandName: 1 }).exec();
+	}
 
 	public async createCarBrand(input: CarBrandInput): Promise<CarBrand> {
 		const createInput: T = {
@@ -39,24 +54,31 @@ export class CarBrandService {
 		return this.carBrandModel.find().sort({ carBrandName: 1 }).exec();
 	}
 
-	public async addCarBrandModel(input: CarBrandUpdate): Promise<CarBrand> {
-		const name = input.carBrandName.trim().toUpperCase(); // normalize brand name
-		const model = input.carBrandModel.trim(); // keep casing as user enters
+	public async updateCarBrand(input: CarBrandUpdate): Promise<CarBrand> {
+		const name = input.carBrandName.trim().toUpperCase();
 
-		const targetCarBrand = await this.carBrandModel.findOne({ carBrandName: name }).exec();
-		if (!targetCarBrand) throw new BadRequestException(Message.NO_DATA_FOUND);
+		const brand = await this.carBrandModel.findOne({ carBrandName: name }).exec();
+		if (!brand) throw new BadRequestException(Message.NO_DATA_FOUND);
 
-		if (targetCarBrand.carBrandModels.includes(model)) {
-			throw new BadRequestException(Message.UPDATE_FAILED);
+		// Add model if provided
+		if (input.carBrandModel) {
+			const model = input.carBrandModel.trim();
+			if (brand.carBrandModels.includes(model)) {
+				throw new BadRequestException(Message.UPDATE_FAILED);
+			}
+			brand.carBrandModels.push(model);
 		}
 
-		targetCarBrand.carBrandModels.push(model);
-		await targetCarBrand.save();
+		// Update status if provided
+		if (input.carBrandStatus) {
+			brand.carBrandStatus = input.carBrandStatus;
+		}
 
-		return targetCarBrand;
+		await brand.save();
+		return brand;
 	}
 
-	public async deleteCarBrandModel(input: CarBrandUpdate): Promise<CarBrand> {
+	public async deleteCarBrandModel(input: CarBrandModelInput): Promise<CarBrand> {
 		const name = input.carBrandName.trim().toUpperCase();
 		const model = input.carBrandModel.trim();
 
@@ -69,7 +91,10 @@ export class CarBrandService {
 	}
 
 	public async removeCarBrand(brandName: string): Promise<CarBrand> {
-		const result = await this.carBrandModel.findOneAndDelete({ carBrandName: brandName });
+		const result = await this.carBrandModel.findOneAndDelete({
+			carBrandName: brandName,
+			carBrandStatus: CarBrandStatus.DELETE,
+		});
 		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 
 		return result;

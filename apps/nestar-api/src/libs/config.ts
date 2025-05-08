@@ -9,14 +9,7 @@ export const availableMemberSorts = ['createdAt', 'updatedAt', 'memberLikes', 'm
 
 export const availableOptions = ["carBarter, 'carRent"];
 export const availableCarOptions = Object.values(CarOptions);
-export const availableCarSorts = [
-	'createdAt',
-	'carRank',
-	'carViews',
-	'carLikes',
-	'carPrice',
-	'updatedAt',
-];
+export const availableCarSorts = ['createdAt', 'carRank', 'carViews', 'carLikes', 'carPrice', 'updatedAt'];
 
 export const availableArticleOptions = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
 
@@ -140,6 +133,6 @@ export const lookupVisited = {
 		from: 'members',
 		foreignField: '_id',
 		localField: 'visitedCar.memberId',
-		as: 'visitedCAr.memberData',
+		as: 'visitedCar.memberData',
 	},
 };

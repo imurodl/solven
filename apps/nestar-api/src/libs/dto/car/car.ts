@@ -85,8 +85,8 @@ export class Car {
 	@Field(() => Date, { nullable: true })
 	deletedAt: Date;
 
-	@Field(() => Date, { nullable: true })
-	manufacturedAt: Date;
+	@Field(() => Number, { nullable: true })
+	manufacturedAt: number;
 
 	@Field(() => Date)
 	createdAt: Date;

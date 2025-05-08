@@ -85,6 +85,6 @@ export class CarUpdate {
 	deletedAt?: Date;
 
 	@IsOptional()
-	@Field(() => Date, { nullable: true })
-	manufacturedAt?: Date;
+	@Field(() => Number, { nullable: true })
+	manufacturedAt?: number;
 }

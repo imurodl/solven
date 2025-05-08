@@ -80,6 +80,12 @@ export class CarInput {
 	@Field(() => [String])
 	carImages: string[];
 
+	@IsNotEmpty()
+	@IsInt()
+	@Min(1900)
+	@Field(() => Int)
+	manufacturedAt: number;
+
 	@IsOptional()
 	@Length(5, 500)
 	@Field(() => String, { nullable: true })
@@ -94,10 +100,6 @@ export class CarInput {
 	carRent?: boolean;
 
 	memberId?: ObjectId;
-
-	@IsOptional()
-	@Field(() => Boolean, { nullable: true })
-	manufacturedAt?: boolean;
 }
 
 @InputType()

@@ -1,5 +1,13 @@
 import { Schema } from 'mongoose';
-import { CarColor, CarFuelType, CarLocation, CarOptions, CarStatus, CarTransmission, CarType } from '../libs/enums/car.enum';
+import {
+	CarColor,
+	CarFuelType,
+	CarLocation,
+	CarOptions,
+	CarStatus,
+	CarTransmission,
+	CarType,
+} from '../libs/enums/car.enum';
 
 const CarSchema = new Schema(
 	{
@@ -105,6 +113,11 @@ const CarSchema = new Schema(
 			required: true,
 		},
 
+		manufacturedAt: {
+			type: Number,
+			required: true,
+		},
+
 		carDesc: {
 			type: String,
 		},
@@ -132,12 +145,8 @@ const CarSchema = new Schema(
 		deletedAt: {
 			type: Date,
 		},
-
-		manufacturedAt: {
-			type: Date,
-		},
 	},
-	{ timestamps: true, collection: 'properties' },
+	{ timestamps: true, collection: 'cars' },
 );
 
 CarSchema.index(

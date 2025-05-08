@@ -156,8 +156,8 @@ export class CarService {
 		if (mileageRange) match.carMileage = { $gte: mileageRange.start, $lte: mileageRange.end };
 		if (yearRange)
 			match.manufacturedAt = {
-				$gte: new Date(`${yearRange.start}-01-01`),
-				$lte: new Date(`${yearRange.end}-12-31`),
+				$gte: yearRange.start,
+				$lte: yearRange.end,
 			};
 
 		if (text) match.carTitle = { $regex: new RegExp(text, 'i') };

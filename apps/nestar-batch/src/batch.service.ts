@@ -29,10 +29,8 @@ export class BatchService {
 			.exec();
 	}
 
-	public async batchTopProperties(): Promise<void> {
-		const cars: Car[] = await this.carModel
-			.find({ carStatus: CarStatus.ACTIVE, carRank: 0 })
-			.exec();
+	public async batchTopCars(): Promise<void> {
+		const cars: Car[] = await this.carModel.find({ carStatus: CarStatus.ACTIVE, carRank: 0 }).exec();
 
 		const promisedList = cars.map(async (ele: Car) => {
 			const { _id, carLikes, carViews } = ele;

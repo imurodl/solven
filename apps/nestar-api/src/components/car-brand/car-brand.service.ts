@@ -50,7 +50,7 @@ export class CarBrandService {
 		return result;
 	}
 
-	public async getAllCarBrands(): Promise<CarBrand[]> {
+	public async getCarBrands(): Promise<CarBrand[]> {
 		return this.carBrandModel.find().sort({ carBrandName: 1 }).exec();
 	}
 
@@ -91,10 +91,13 @@ export class CarBrandService {
 	}
 
 	public async removeCarBrand(brandName: string): Promise<CarBrand> {
-		const result = await this.carBrandModel.findOneAndDelete({
-			carBrandName: brandName,
-			carBrandStatus: CarBrandStatus.DELETE,
-		});
+		const result = await this.carBrandModel
+			.findOneAndDelete({
+				carBrandName: brandName.trim().toUpperCase(),
+				carBrandStatus: CarBrandStatus.DELETE,
+			})
+			.exec();
+		console.log('result:', result);
 		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 
 		return result;

@@ -45,16 +45,16 @@ export class CarBrandResolver {
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Query(() => [CarBrand])
-	public async getAllCarBrands(): Promise<CarBrand[]> {
-		console.log('Query: getAllCarBrands');
-		return await this.carBrandService.getAllCarBrands();
+	public async getCarBrands(): Promise<CarBrand[]> {
+		console.log('Query: getCarBrands');
+		return await this.carBrandService.getCarBrands();
 	}
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
-	public async addCarBrandModel(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
-		console.log('Mutation: addCarBrandModel');
+	public async updateCarBrand(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
+		console.log('Mutation: updateCarBrand');
 		return await this.carBrandService.updateCarBrand(input);
 	}
 

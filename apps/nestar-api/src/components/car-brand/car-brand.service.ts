@@ -25,10 +25,14 @@ export class CarBrandService {
 	}
 
 	public async createCarBrand(input: CarBrandInput): Promise<CarBrand> {
-		const createInput: T = {
+		const createInput: CarBrandInput = {
 			carBrandName: input.carBrandName.trim().toUpperCase(),
 			carBrandModels: input.carBrandModels.map((brandModel) => brandModel.trim()),
 		};
+
+		if (input?.carBrandImg) {
+			createInput.carBrandImg = input.carBrandImg;
+		}
 
 		const exists: CarBrand | null = await this.carBrandModel.findOne({
 			carBrandName: createInput.carBrandName,
@@ -72,6 +76,11 @@ export class CarBrandService {
 		// Update status if provided
 		if (input.carBrandStatus) {
 			brand.carBrandStatus = input.carBrandStatus;
+		}
+
+		// Update image if provided
+		if (input.carBrandImg) {
+			brand.carBrandImg = input.carBrandImg;
 		}
 
 		await brand.save();

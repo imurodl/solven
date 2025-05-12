@@ -136,7 +136,7 @@ export class CarService {
 			transmissionList,
 			colorList,
 			carOptions,
-			carListingptions,
+			carListingOptions,
 			pricesRange,
 			mileageRange,
 			yearRange,
@@ -162,12 +162,12 @@ export class CarService {
 
 		if (text) match.carTitle = { $regex: new RegExp(text, 'i') };
 
-		if (carOptions?.length) {
-			match.carOptions = { $all: carOptions };
+		if (carListingOptions?.length) {
+			match.carOptions = { $all: carListingOptions };
 		}
 
-		if (carListingptions?.length) {
-			match['$or'] = carListingptions.map((option) => {
+		if (carOptions?.length) {
+			match['$or'] = carOptions.map((option) => {
 				return { [option]: true };
 			});
 		}

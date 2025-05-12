@@ -9,6 +9,11 @@ const CarBrandSchema = new Schema(
 			unique: true,
 		},
 
+		carBrandImg: {
+			type: String,
+			default: '',
+		},
+
 		carBrandStatus: {
 			type: String,
 			enum: CarBrandStatus,

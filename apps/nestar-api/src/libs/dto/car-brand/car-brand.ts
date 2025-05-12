@@ -10,6 +10,10 @@ export class CarBrandInput {
 	@Field(() => String)
 	carBrandName: string;
 
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	carBrandImg?: string;
+
 	@IsArray()
 	@ArrayNotEmpty()
 	@Field(() => [String])
@@ -31,19 +35,23 @@ export class CarBrandUpdate {
 	@IsOptional()
 	@Field(() => CarBrandStatus, { nullable: true })
 	carBrandStatus?: CarBrandStatus;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	carBrandImg?: string;
 }
 
 @InputType()
 export class CarBrandModelInput {
-  @IsNotEmpty()
-  @Length(2, 50)
-  @Field(() => String)
-  carBrandName: string;
+	@IsNotEmpty()
+	@Length(2, 50)
+	@Field(() => String)
+	carBrandName: string;
 
-  @IsNotEmpty()
-  @Length(2, 50)
-  @Field(() => String)
-  carBrandModel: string;
+	@IsNotEmpty()
+	@Length(2, 50)
+	@Field(() => String)
+	carBrandModel: string;
 }
 
 @ObjectType()
@@ -53,6 +61,9 @@ export class CarBrand {
 
 	@Field(() => String)
 	carBrandName: string;
+
+	@Field(() => String)
+	carBrandImg: string;
 
 	@Field(() => [String])
 	carBrandModels: string[];

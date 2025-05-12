@@ -160,18 +160,19 @@ class CarsISearch {
 	brandList?: string[];
 
 	@IsOptional()
+	@IsIn(availableOptions, { each: true })
 	@Field(() => [String], { nullable: true })
 	modelList?: string[];
 
 	@IsOptional()
 	@IsIn(availableCarOptions, { each: true })
 	@Field(() => [CarOptions], { nullable: true })
-	carOptions?: CarOptions[];
+	carListingOptions?: CarOptions[];
 
 	@IsOptional()
 	@IsIn(availableOptions, { each: true })
 	@Field(() => [String], { nullable: true })
-	carListingptions?: string[];
+	carOptions?: string[];
 
 	@IsOptional()
 	@Field(() => PricesRange, { nullable: true })

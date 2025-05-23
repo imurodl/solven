@@ -21,7 +21,7 @@ export class CarBrandService {
 	}
 
 	public async getCarBrandsByUser(): Promise<CarBrand[]> {
-		return this.carBrandModel.find({ carBrandStatus: CarBrandStatus.ACTIVE }).sort({ carBrandName: 1 }).exec();
+		return this.carBrandModel.find({ carBrandStatus: CarBrandStatus.ACTIVE }).sort({ createdAt: 1 }).exec();
 	}
 
 	public async createCarBrand(input: CarBrandInput): Promise<CarBrand> {

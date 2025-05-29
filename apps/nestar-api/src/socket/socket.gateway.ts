@@ -1,10 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'ws';
 import * as WebSocket from 'ws';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
 import * as url from 'url';
+import { NotificationService } from '../components/notification/notification.service';
 
 interface MessagePayload {
 	event: string;
@@ -35,7 +36,11 @@ export class SocketGateway implements OnGatewayInit {
 	private clientsAuthMap = new Map<WebSocket, Member>();
 	private messagesList: MessagePayload[] = [];
 
-	constructor(private authService: AuthService) {}
+	constructor(
+		private authService: AuthService,
+		@Inject(forwardRef(() => NotificationService))
+		private notificationService: NotificationService,
+	) {}
 
 	@WebSocketServer()
 	server: Server;
@@ -70,6 +75,7 @@ export class SocketGateway implements OnGatewayInit {
 		const clientNick: string = authMember.memberNick;
 		this.logger.verbose(`Connection [${clientNick}] & total: [${this.summaryClient}]`);
 
+		// Send connection info
 		const infoMsg: InfoPayload = {
 			event: 'info',
 			totalClients: this.summaryClient,
@@ -78,6 +84,24 @@ export class SocketGateway implements OnGatewayInit {
 		};
 		this.emitMessage(infoMsg);
 		client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
+
+		// Send unread notifications
+		const unreadNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
+		if (unreadNotifications.length > 0) {
+			client.send(
+				JSON.stringify({
+					event: 'unreadNotifications',
+					payload: unreadNotifications.map((notification) => ({
+						id: notification._id.toString(),
+						title: notification.notificationTitle,
+						desc: notification.notificationDesc,
+						type: notification.notificationType,
+						status: notification.notificationStatus,
+						createdAt: notification.createdAt,
+					})),
+				}),
+			);
+		}
 	}
 
 	public handleDisconnect(client: WebSocket) {
@@ -127,7 +151,7 @@ export class SocketGateway implements OnGatewayInit {
 		});
 	}
 
-	// New method for sending notifications
+	// Method for sending notifications
 	public sendNotification(userId: string, notification: NotificationPayload) {
 		let notificationsSent = 0;
 		this.server.clients.forEach((client) => {

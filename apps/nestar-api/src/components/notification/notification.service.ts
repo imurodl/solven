@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { NotificationInput } from '../../libs/dto/notification/notification.input';
 import { Notification } from '../../libs/dto/notification/notification';
 import { NotificationStatus } from '../../libs/enums/notification.enum';
 import { SocketGateway } from '../../socket/socket.gateway';
-import { MemberService } from '../member/member.service';
 
 @Injectable()
 export class NotificationService {
 	constructor(
 		@InjectModel('Notification')
 		private readonly notificationModel: Model<Notification>,
+		@Inject(forwardRef(() => SocketGateway))
 		private readonly socketGateway: SocketGateway,
 	) {}
 
@@ -32,5 +32,15 @@ export class NotificationService {
 		});
 
 		return notification;
+	}
+
+	async getUnreadNotifications(userId: string): Promise<Notification[]> {
+		return this.notificationModel
+			.find({
+				receiverId: userId,
+				notificationStatus: NotificationStatus.WAIT,
+			})
+			.sort({ createdAt: -1 })
+			.exec();
 	}
 }

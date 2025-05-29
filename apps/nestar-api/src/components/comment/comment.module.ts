@@ -8,14 +8,20 @@ import { ViewModule } from '../view/view.module';
 import { MemberModule } from '../member/member.module';
 import { CarModule } from '../car/car.module';
 import { BoardArticleModule } from '../board-article/board-article.module';
+import { NotificationModule } from '../notification/notification.module';
+import MemberSchema from '../../schemas/Member.model';
 
 @Module({
 	imports: [
-		MongooseModule.forFeature([{ name: 'Comment', schema: CommentSchema }]),
+		MongooseModule.forFeature([
+			{ name: 'Comment', schema: CommentSchema },
+			{ name: 'Member', schema: MemberSchema },
+		]),
 		AuthModule,
 		MemberModule,
 		CarModule,
 		BoardArticleModule,
+		NotificationModule,
 	],
 	providers: [CommentResolver, CommentService],
 })

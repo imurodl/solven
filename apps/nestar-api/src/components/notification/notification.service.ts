@@ -43,4 +43,67 @@ export class NotificationService {
 			.sort({ createdAt: -1 })
 			.exec();
 	}
+
+	async markAsRead(notificationId: string, userId: string): Promise<boolean> {
+		try {
+			const notification = await this.notificationModel.findOneAndUpdate(
+				{
+					_id: notificationId,
+					receiverId: userId,
+					notificationStatus: NotificationStatus.WAIT,
+				},
+				{
+					notificationStatus: NotificationStatus.READ,
+				},
+				{ new: true },
+			);
+
+			if (notification) {
+				// Notify the client that the notification has been read
+				this.socketGateway.sendNotification(userId, {
+					id: notification._id.toString(),
+					title: notification.notificationTitle,
+					desc: notification.notificationDesc,
+					type: notification.notificationType,
+					status: NotificationStatus.READ,
+					createdAt: notification.createdAt,
+				});
+				return true;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	async markMultipleAsRead(userId: string, notifications: Notification[]): Promise<void> {
+		try {
+			const notificationIds = notifications.map((n) => n._id);
+
+			await this.notificationModel.updateMany(
+				{
+					_id: { $in: notificationIds },
+					receiverId: userId,
+					notificationStatus: NotificationStatus.WAIT,
+				},
+				{
+					notificationStatus: NotificationStatus.READ,
+				},
+			);
+
+			// Send status updates for each notification
+			for (const notification of notifications) {
+				this.socketGateway.sendNotification(userId, {
+					id: notification._id.toString(),
+					title: notification.notificationTitle,
+					desc: notification.notificationDesc,
+					type: notification.notificationType,
+					status: NotificationStatus.READ,
+					createdAt: notification.createdAt,
+				});
+			}
+		} catch (error) {
+			throw error;
+		}
+	}
 }

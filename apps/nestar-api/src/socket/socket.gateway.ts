@@ -62,14 +62,12 @@ export class SocketGateway implements OnGatewayInit {
 	public async handleConnection(client: WebSocket, req: any) {
 		const authMember = await this.retrieveAuth(req);
 
-		// Reject unauthenticated connections
 		if (!authMember) {
 			client.close();
 			return;
 		}
 
 		this.summaryClient++;
-		//@ts-ignore
 		this.clientsAuthMap.set(client, authMember);
 
 		const clientNick: string = authMember.memberNick;
@@ -85,13 +83,23 @@ export class SocketGateway implements OnGatewayInit {
 		this.emitMessage(infoMsg);
 		client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
 
-		// Send unread notifications
-		const unreadNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
-		if (unreadNotifications.length > 0) {
+		await this.handleGetNotifications(client);
+	}
+
+	private async handleGetNotifications(client: WebSocket) {
+		try {
+			const authMember = this.clientsAuthMap.get(client);
+			if (!authMember) return;
+
+			// Get all notifications, not just unread ones
+			const allNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
+			const unreadNotifications = allNotifications.filter((n) => n.notificationStatus === 'WAIT');
+
+			// Send all notifications to the client
 			client.send(
 				JSON.stringify({
-					event: 'unreadNotifications',
-					payload: unreadNotifications.map((notification) => ({
+					event: 'notifications_list',
+					data: allNotifications.map((notification) => ({
 						id: notification._id.toString(),
 						title: notification.notificationTitle,
 						desc: notification.notificationDesc,
@@ -101,7 +109,33 @@ export class SocketGateway implements OnGatewayInit {
 					})),
 				}),
 			);
+
+			// If there are unread notifications, mark them as read
+			if (unreadNotifications.length > 0) {
+				await this.notificationService.markMultipleAsRead(authMember._id.toString(), unreadNotifications);
+
+				// Send status updates for notifications that were marked as read
+				unreadNotifications.forEach((notification) => {
+					client.send(
+						JSON.stringify({
+							event: 'notificationStatus',
+							payload: {
+								id: notification._id.toString(),
+								status: 'READ',
+							},
+						}),
+					);
+				});
+			}
+		} catch (error) {
+			// Silent fail to maintain user experience
+			this.logger.error('Error in handleGetNotifications:', error);
 		}
+	}
+
+	@SubscribeMessage('get_notifications')
+	public async handleGetNotificationsEvent(client: WebSocket): Promise<void> {
+		await this.handleGetNotifications(client);
 	}
 
 	public handleDisconnect(client: WebSocket) {

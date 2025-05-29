@@ -1,117 +1,152 @@
 import { Logger } from '@nestjs/common';
 import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'ws';
-import * as WebSocket from "ws";
+import * as WebSocket from 'ws';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
 import * as url from 'url';
 
 interface MessagePayload {
-  event: string;
-  text: string;
-  memberData: Member | null;
+	event: string;
+	text: string;
+	memberData: Member | null;
 }
 
 interface InfoPayload {
-  event: string;
-  totalClients: number;
-  memberData: Member | null;
-  action: string;
+	event: string;
+	totalClients: number;
+	memberData: Member | null;
+	action: string;
+}
+
+interface NotificationPayload {
+	id: string;
+	title: string;
+	desc?: string;
+	type: string;
+	status: string;
+	createdAt: Date;
 }
 
 @WebSocketGateway({ transport: ['websocket'], secure: false })
 export class SocketGateway implements OnGatewayInit {
-  private logger: Logger = new Logger('SocketEventsGateway');
-  private summaryClient: number = 0;
-  private clientsAuthMap = new Map<WebSocket, Member>()
-  private messagesList: MessagePayload[] = [];
+	private logger: Logger = new Logger('SocketEventsGateway');
+	private summaryClient: number = 0;
+	private clientsAuthMap = new Map<WebSocket, Member>();
+	private messagesList: MessagePayload[] = [];
 
-  constructor(private authService: AuthService) { }
+	constructor(private authService: AuthService) {}
 
-  @WebSocketServer()
-  server: Server;
+	@WebSocketServer()
+	server: Server;
 
-  public afterInit(server: Server) {
-    this.logger.verbose(`WebSocket Server Initialized total: [${this.summaryClient}]`);
-  }
+	public afterInit(server: Server) {
+		this.logger.verbose(`WebSocket Server Initialized total: [${this.summaryClient}]`);
+	}
 
-  private async retrieveAuth(req: any): Promise<Member | null> {
-    try {
-      const parseUrl = url.parse(req.url, true);
-      const { token } = parseUrl.query;
-      return await this.authService.verifyToken(token as string);
-    } catch (err) {
-      return null;
-    }
-  }
+	private async retrieveAuth(req: any): Promise<Member | null> {
+		try {
+			const parseUrl = url.parse(req.url, true);
+			const { token } = parseUrl.query;
+			return await this.authService.verifyToken(token as string);
+		} catch (err) {
+			return null;
+		}
+	}
 
-  public async handleConnection(client: WebSocket, req: any) {
-    const authMember = await this.retrieveAuth(req);
-    this.summaryClient++;
-    //@ts-ignore
-    this.clientsAuthMap.set(client, authMember); 
+	public async handleConnection(client: WebSocket, req: any) {
+		const authMember = await this.retrieveAuth(req);
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(`Connection [${clientNick}] & total: [${this.summaryClient}]`);
+		// Reject unauthenticated connections
+		if (!authMember) {
+			client.close();
+			return;
+		}
 
-    const infoMsg: InfoPayload = {
-      event: 'info',
-      totalClients: this.summaryClient,
-      memberData: authMember,
-      action: 'joined',
-    };
-    this.emitMessage(infoMsg)
-    client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
-  }
+		this.summaryClient++;
+		//@ts-ignore
+		this.clientsAuthMap.set(client, authMember);
 
-  public handleDisconnect(client: WebSocket) {
-    const authMember = this.clientsAuthMap.get(client)
-    this.summaryClient--;
-    this.clientsAuthMap.delete(client);
+		const clientNick: string = authMember.memberNick;
+		this.logger.verbose(`Connection [${clientNick}] & total: [${this.summaryClient}]`);
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(`Disconnected [${clientNick}] & total  [${this.summaryClient}]`);
+		const infoMsg: InfoPayload = {
+			event: 'info',
+			totalClients: this.summaryClient,
+			memberData: authMember,
+			action: 'joined',
+		};
+		this.emitMessage(infoMsg);
+		client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
+	}
 
-    const infoMsg: InfoPayload = {
-      event: 'info',
-      totalClients: this.summaryClient,
-      memberData: authMember ?? null,
-      action: 'left',
-    };
-    this.broadcastMessage(client, infoMsg);
-  }
+	public handleDisconnect(client: WebSocket) {
+		const authMember = this.clientsAuthMap.get(client);
+		this.summaryClient--;
+		this.clientsAuthMap.delete(client);
 
-  @SubscribeMessage('message')
-  public async handleMessage(client: WebSocket, payload: string): Promise<void> {
-    const authMember = this.clientsAuthMap.get(client)
-    const newMessage: MessagePayload = { event: 'message', text: payload, memberData: authMember ?? null };
+		const clientNick: string = authMember?.memberNick ?? 'Guest';
+		this.logger.verbose(`Disconnected [${clientNick}] & total  [${this.summaryClient}]`);
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(`NEW MESSAGE [${clientNick}] : ${payload}`);
+		const infoMsg: InfoPayload = {
+			event: 'info',
+			totalClients: this.summaryClient,
+			memberData: authMember ?? null,
+			action: 'left',
+		};
+		this.broadcastMessage(client, infoMsg);
+	}
 
-    this.messagesList.push(newMessage); 
-    if (this.messagesList.length >=5) this.messagesList.splice(0, this.messagesList.length -5);
+	@SubscribeMessage('message')
+	public async handleMessage(client: WebSocket, payload: string): Promise<void> {
+		const authMember = this.clientsAuthMap.get(client);
+		const newMessage: MessagePayload = { event: 'message', text: payload, memberData: authMember ?? null };
 
-    this.emitMessage(newMessage)
-  }
+		const clientNick: string = authMember?.memberNick ?? 'Guest';
+		this.logger.verbose(`NEW MESSAGE [${clientNick}] : ${payload}`);
 
-  private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
-    this.server.clients.forEach((client) => {
-      if (client !== sender && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
-      }
-    });
-  }
+		this.messagesList.push(newMessage);
+		if (this.messagesList.length >= 5) this.messagesList.splice(0, this.messagesList.length - 5);
 
-  private emitMessage(message: InfoPayload | MessagePayload) {
-    this.server.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
-      }
-    })
-  }
+		this.emitMessage(newMessage);
+	}
+
+	private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client !== sender && client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
+
+	private emitMessage(message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
+
+	// New method for sending notifications
+	public sendNotification(userId: string, notification: NotificationPayload) {
+		let notificationsSent = 0;
+		this.server.clients.forEach((client) => {
+			const authMember = this.clientsAuthMap.get(client);
+
+			if (client.readyState === WebSocket.OPEN) {
+				if (authMember && authMember._id.toString() === userId) {
+					client.send(
+						JSON.stringify({
+							event: 'notification',
+							payload: notification,
+						}),
+					);
+					notificationsSent++;
+				}
+			}
+		});
+	}
 }
-
 
 /*
  MESSAGE TARGET:

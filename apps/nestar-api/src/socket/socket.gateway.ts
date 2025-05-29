@@ -29,6 +29,10 @@ interface NotificationPayload {
 	createdAt: Date;
 }
 
+interface MarkReadPayload {
+	notificationIds: string[];
+}
+
 @WebSocketGateway({ transport: ['websocket'], secure: false })
 export class SocketGateway implements OnGatewayInit {
 	private logger: Logger = new Logger('SocketEventsGateway');
@@ -91,9 +95,8 @@ export class SocketGateway implements OnGatewayInit {
 			const authMember = this.clientsAuthMap.get(client);
 			if (!authMember) return;
 
-			// Get all notifications, not just unread ones
+			// Get all notifications
 			const allNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
-			const unreadNotifications = allNotifications.filter((n) => n.notificationStatus === 'WAIT');
 
 			// Send all notifications to the client
 			client.send(
@@ -109,13 +112,40 @@ export class SocketGateway implements OnGatewayInit {
 					})),
 				}),
 			);
+		} catch (error) {
+			// Silent fail to maintain user experience
+			this.logger.error('Error in handleGetNotifications:', error);
+		}
+	}
 
-			// If there are unread notifications, mark them as read
-			if (unreadNotifications.length > 0) {
-				await this.notificationService.markMultipleAsRead(authMember._id.toString(), unreadNotifications);
+	@SubscribeMessage('get_notifications')
+	public async handleGetNotificationsEvent(client: WebSocket): Promise<void> {
+		await this.handleGetNotifications(client);
+	}
+
+	@SubscribeMessage('markNotificationsAsRead')
+	public async handleMarkNotificationsAsRead(client: WebSocket, data: any): Promise<void> {
+		try {
+			const authMember = this.clientsAuthMap.get(client);
+			if (!authMember) return;
+
+			// Handle both array of IDs or single ID
+			const notificationIds = Array.isArray(data) ? data : [data];
+
+			if (!notificationIds.length) return;
+
+			// Get the notifications to mark as read
+			const notifications = await this.notificationService.getNotificationsByIds(
+				notificationIds,
+				authMember._id.toString(),
+			);
+
+			if (notifications.length > 0) {
+				// Mark notifications as read
+				await this.notificationService.markMultipleAsRead(authMember._id.toString(), notifications);
 
 				// Send status updates for notifications that were marked as read
-				unreadNotifications.forEach((notification) => {
+				notifications.forEach((notification) => {
 					client.send(
 						JSON.stringify({
 							event: 'notificationStatus',
@@ -128,14 +158,8 @@ export class SocketGateway implements OnGatewayInit {
 				});
 			}
 		} catch (error) {
-			// Silent fail to maintain user experience
-			this.logger.error('Error in handleGetNotifications:', error);
+			this.logger.error('Error in handleMarkNotificationsAsRead:', error);
 		}
-	}
-
-	@SubscribeMessage('get_notifications')
-	public async handleGetNotificationsEvent(client: WebSocket): Promise<void> {
-		await this.handleGetNotifications(client);
 	}
 
 	public handleDisconnect(client: WebSocket) {

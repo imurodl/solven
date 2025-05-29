@@ -44,6 +44,16 @@ export class NotificationService {
 			.exec();
 	}
 
+	async getNotificationsByIds(notificationIds: string[], userId: string): Promise<Notification[]> {
+		return this.notificationModel
+			.find({
+				_id: { $in: notificationIds },
+				receiverId: userId,
+				notificationStatus: NotificationStatus.WAIT,
+			})
+			.exec();
+	}
+
 	async markAsRead(notificationId: string, userId: string): Promise<boolean> {
 		try {
 			const notification = await this.notificationModel.findOneAndUpdate(

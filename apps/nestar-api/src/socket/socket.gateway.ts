@@ -95,23 +95,25 @@ export class SocketGateway implements OnGatewayInit {
 			const authMember = this.clientsAuthMap.get(client);
 			if (!authMember) return;
 
-			// Get all notifications
-			const allNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
+			// Get unread notifications
+			const unreadNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
 
-			// Send all notifications to the client
-			client.send(
-				JSON.stringify({
-					event: 'notifications_list',
-					data: allNotifications.map((notification) => ({
-						id: notification._id.toString(),
-						title: notification.notificationTitle,
-						desc: notification.notificationDesc,
-						type: notification.notificationType,
-						status: notification.notificationStatus,
-						createdAt: notification.createdAt,
-					})),
-				}),
-			);
+			// Send notifications to the client
+			if (unreadNotifications.length > 0) {
+				client.send(
+					JSON.stringify({
+						event: 'notifications_list',
+						data: unreadNotifications.map((notification) => ({
+							id: notification._id.toString(),
+							title: notification.notificationTitle,
+							desc: notification.notificationDesc,
+							type: notification.notificationType,
+							status: notification.notificationStatus,
+							createdAt: notification.createdAt,
+						})),
+					}),
+				);
+			}
 		} catch (error) {
 			// Silent fail to maintain user experience
 			this.logger.error('Error in handleGetNotifications:', error);

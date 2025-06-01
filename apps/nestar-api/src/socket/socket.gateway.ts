@@ -7,16 +7,24 @@ import { Member } from '../libs/dto/member/member';
 import * as url from 'url';
 import { NotificationService } from '../components/notification/notification.service';
 
+interface GuestUser {
+	id: string;
+	memberNick: string;
+	isGuest: true;
+}
+
+type ChatUser = Member | GuestUser;
+
 interface MessagePayload {
 	event: string;
 	text: string;
-	memberData: Member | null;
+	memberData: ChatUser;
 }
 
 interface InfoPayload {
 	event: string;
 	totalClients: number;
-	memberData: Member | null;
+	memberData: ChatUser;
 	action: string;
 }
 
@@ -37,8 +45,9 @@ interface MarkReadPayload {
 export class SocketGateway implements OnGatewayInit {
 	private logger: Logger = new Logger('SocketEventsGateway');
 	private summaryClient: number = 0;
-	private clientsAuthMap = new Map<WebSocket, Member>();
+	private clientsMap = new Map<WebSocket, ChatUser>();
 	private messagesList: MessagePayload[] = [];
+	private guestCounter: number = 0;
 
 	constructor(
 		private authService: AuthService,
@@ -53,50 +62,58 @@ export class SocketGateway implements OnGatewayInit {
 		this.logger.verbose(`WebSocket Server Initialized total: [${this.summaryClient}]`);
 	}
 
-	private async retrieveAuth(req: any): Promise<Member | null> {
+	private async retrieveAuth(req: any): Promise<ChatUser> {
 		try {
 			const parseUrl = url.parse(req.url, true);
 			const { token } = parseUrl.query;
-			return await this.authService.verifyToken(token as string);
+			if (token) {
+				const member = await this.authService.verifyToken(token as string);
+				if (member) return member;
+			}
 		} catch (err) {
-			return null;
+			// Fall through to guest user creation
 		}
+
+		// Create a guest user if no valid token
+		this.guestCounter++;
+		return {
+			id: `guest-${this.guestCounter}`,
+			memberNick: `Guest-${this.guestCounter}`,
+			isGuest: true,
+		};
 	}
 
 	public async handleConnection(client: WebSocket, req: any) {
-		const authMember = await this.retrieveAuth(req);
-
-		if (!authMember) {
-			client.close();
-			return;
-		}
-
+		const user = await this.retrieveAuth(req);
+		this.clientsMap.set(client, user);
 		this.summaryClient++;
-		this.clientsAuthMap.set(client, authMember);
 
-		const clientNick: string = authMember.memberNick;
+		const clientNick: string = user.memberNick;
 		this.logger.verbose(`Connection [${clientNick}] & total: [${this.summaryClient}]`);
 
 		// Send connection info
 		const infoMsg: InfoPayload = {
 			event: 'info',
 			totalClients: this.summaryClient,
-			memberData: authMember,
+			memberData: user,
 			action: 'joined',
 		};
 		this.emitMessage(infoMsg);
 		client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
 
-		await this.handleGetNotifications(client);
+		// Only handle notifications for authenticated users
+		if (!('isGuest' in user)) {
+			await this.handleGetNotifications(client);
+		}
 	}
 
 	private async handleGetNotifications(client: WebSocket) {
 		try {
-			const authMember = this.clientsAuthMap.get(client);
-			if (!authMember) return;
+			const user = this.clientsMap.get(client);
+			if (!user || 'isGuest' in user) return;
 
 			// Get unread notifications
-			const unreadNotifications = await this.notificationService.getUnreadNotifications(authMember._id.toString());
+			const unreadNotifications = await this.notificationService.getUnreadNotifications(user._id.toString());
 
 			// Send notifications to the client
 			if (unreadNotifications.length > 0) {
@@ -115,7 +132,6 @@ export class SocketGateway implements OnGatewayInit {
 				);
 			}
 		} catch (error) {
-			// Silent fail to maintain user experience
 			this.logger.error('Error in handleGetNotifications:', error);
 		}
 	}
@@ -128,8 +144,8 @@ export class SocketGateway implements OnGatewayInit {
 	@SubscribeMessage('markNotificationsAsRead')
 	public async handleMarkNotificationsAsRead(client: WebSocket, data: any): Promise<void> {
 		try {
-			const authMember = this.clientsAuthMap.get(client);
-			if (!authMember) return;
+			const user = this.clientsMap.get(client);
+			if (!user || 'isGuest' in user) return;
 
 			// Handle both array of IDs or single ID
 			const notificationIds = Array.isArray(data) ? data : [data];
@@ -137,14 +153,11 @@ export class SocketGateway implements OnGatewayInit {
 			if (!notificationIds.length) return;
 
 			// Get the notifications to mark as read
-			const notifications = await this.notificationService.getNotificationsByIds(
-				notificationIds,
-				authMember._id.toString(),
-			);
+			const notifications = await this.notificationService.getNotificationsByIds(notificationIds, user._id.toString());
 
 			if (notifications.length > 0) {
 				// Mark notifications as read
-				await this.notificationService.markMultipleAsRead(authMember._id.toString(), notifications);
+				await this.notificationService.markMultipleAsRead(user._id.toString(), notifications);
 
 				// Send status updates for notifications that were marked as read
 				notifications.forEach((notification) => {
@@ -165,29 +178,36 @@ export class SocketGateway implements OnGatewayInit {
 	}
 
 	public handleDisconnect(client: WebSocket) {
-		const authMember = this.clientsAuthMap.get(client);
-		this.summaryClient--;
-		this.clientsAuthMap.delete(client);
+		const user = this.clientsMap.get(client);
+		if (user) {
+			this.summaryClient--;
+			this.clientsMap.delete(client);
 
-		const clientNick: string = authMember?.memberNick ?? 'Guest';
-		this.logger.verbose(`Disconnected [${clientNick}] & total  [${this.summaryClient}]`);
+			const clientNick: string = user.memberNick;
+			this.logger.verbose(`Disconnected [${clientNick}] & total  [${this.summaryClient}]`);
 
-		const infoMsg: InfoPayload = {
-			event: 'info',
-			totalClients: this.summaryClient,
-			memberData: authMember ?? null,
-			action: 'left',
-		};
-		this.broadcastMessage(client, infoMsg);
+			const infoMsg: InfoPayload = {
+				event: 'info',
+				totalClients: this.summaryClient,
+				memberData: user,
+				action: 'left',
+			};
+			this.broadcastMessage(client, infoMsg);
+		}
 	}
 
 	@SubscribeMessage('message')
 	public async handleMessage(client: WebSocket, payload: string): Promise<void> {
-		const authMember = this.clientsAuthMap.get(client);
-		const newMessage: MessagePayload = { event: 'message', text: payload, memberData: authMember ?? null };
+		const user = this.clientsMap.get(client);
+		if (!user) return;
 
-		const clientNick: string = authMember?.memberNick ?? 'Guest';
-		this.logger.verbose(`NEW MESSAGE [${clientNick}] : ${payload}`);
+		const newMessage: MessagePayload = {
+			event: 'message',
+			text: payload,
+			memberData: user,
+		};
+
+		this.logger.verbose(`NEW MESSAGE [${user.memberNick}] : ${payload}`);
 
 		this.messagesList.push(newMessage);
 		if (this.messagesList.length >= 5) this.messagesList.splice(0, this.messagesList.length - 5);
@@ -215,10 +235,10 @@ export class SocketGateway implements OnGatewayInit {
 	public sendNotification(userId: string, notification: NotificationPayload) {
 		let notificationsSent = 0;
 		this.server.clients.forEach((client) => {
-			const authMember = this.clientsAuthMap.get(client);
+			const user = this.clientsMap.get(client);
 
 			if (client.readyState === WebSocket.OPEN) {
-				if (authMember && authMember._id.toString() === userId) {
+				if (user && !('isGuest' in user) && user._id.toString() === userId) {
 					client.send(
 						JSON.stringify({
 							event: 'notification',

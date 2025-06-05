@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # PRODUCTION
-git reser --hard
+git reset --hard
 git checkout master
 git pull origin master
 

@@ -42,3 +42,9 @@ networks:
   # solven-next: localhost: 4006 => container: 3006
   # solven-api: localhost: 4007 => container: 3007
   # solven-batch: localhost: 4008 => container: 3008    
+
+  # docker compose up -d
+  # docker compose start
+  # docker compose restart
+  # docker compose stop && docker compose rm -f
+  # docker compose config

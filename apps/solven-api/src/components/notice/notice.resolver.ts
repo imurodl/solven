@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { NoticeService } from './notice.service';
 import { Notice, Notices } from '../../libs/dto/notice/notice';
@@ -16,26 +16,28 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Resolver()
 export class NoticeResolver {
+	private readonly logger = new Logger(NoticeResolver.name);
+
 	constructor(private readonly noticeService: NoticeService) {}
 
 	@UseGuards(AuthGuard, RolesGuard)
 	@Roles(MemberType.ADMIN)
 	@Mutation(() => Notice)
 	public async createNotice(@Args('input') input: NoticeInput, @AuthMember('_id') memberId: ObjectId): Promise<Notice> {
-		console.log('Mutation: createNotice');
+		this.logger.log('Mutation: createNotice');
 		return await this.noticeService.createNotice(memberId, input);
 	}
 	@UseGuards(WithoutGuard)
 	@Query(() => Notices)
 	public async getAllNotices(@Args('input') input: AllNoticesInquiry): Promise<Notices> {
-		console.log('Query: getAllNotices');
+		this.logger.log('Query: getAllNotices');
 		return await this.noticeService.getAllNotices(input);
 	}
 
 	@UseGuards(WithoutGuard)
 	@Query(() => Notice)
 	public async getNotice(@Args('noticeId', { type: () => GraphQLString }) noticeId: string): Promise<Notice> {
-		console.log('Query: getNotice');
+		this.logger.log('Query: getNotice');
 		const objectId = shapeIntoMongoObjectId(noticeId);
 		return await this.noticeService.getNotice(objectId);
 	}
@@ -48,7 +50,7 @@ export class NoticeResolver {
 		@Args('input') input: NoticeUpdate,
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Notice> {
-		console.log('Mutation: updateNotice');
+		this.logger.log('Mutation: updateNotice');
 		const objectId = shapeIntoMongoObjectId(noticeId);
 		return await this.noticeService.updateNotice(memberId, objectId, input);
 	}
@@ -60,7 +62,7 @@ export class NoticeResolver {
 		@Args('noticeId', { type: () => GraphQLString }) noticeId: string,
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Notice> {
-		console.log('Mutation: removeNotice');
+		this.logger.log('Mutation: removeNotice');
 
 		const objectId = shapeIntoMongoObjectId(noticeId);
 		return await this.noticeService.removeNotice(memberId, objectId);

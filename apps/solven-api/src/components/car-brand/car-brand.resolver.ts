@@ -2,27 +2,29 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CarBrandService } from './car-brand.service';
 import { MemberType } from '../../libs/enums/member.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CarBrand, CarBrandInput, CarBrandModelInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
 import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
 export class CarBrandResolver {
+	private readonly logger = new Logger(CarBrandResolver.name);
+
 	constructor(private readonly carBrandService: CarBrandService) {}
 
 	@UseGuards(WithoutGuard)
 	@UseGuards(RolesGuard)
 	@Query(() => CarBrand)
 	public async getCarBrandByUser(@Args('input') input: string): Promise<CarBrand> {
-		console.log('Query: getCarBrandByUser');
+		this.logger.log('Query: getCarBrandByUser');
 		return await this.carBrandService.getCarBrandByUser(input);
 	}
 
 	@UseGuards(WithoutGuard)
 	@Query(() => [CarBrand])
 	public async getCarBrandsByUser(): Promise<CarBrand[]> {
-		console.log('Query: getCarBrandsByUser');
+		this.logger.log('Query: getCarBrandsByUser');
 		return await this.carBrandService.getCarBrandsByUser();
 	}
 
@@ -30,7 +32,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
 	public async createCarBrand(@Args('input') input: CarBrandInput): Promise<CarBrand> {
-		console.log('Mutation: createCarBrand');
+		this.logger.log('Mutation: createCarBrand');
 		return await this.carBrandService.createCarBrand(input);
 	}
 
@@ -38,7 +40,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Query(() => CarBrand)
 	public async getCarBrand(@Args('input') input: string): Promise<CarBrand> {
-		console.log('Query: getCarBrand');
+		this.logger.log('Query: getCarBrand');
 		return await this.carBrandService.getCarBrand(input);
 	}
 
@@ -46,7 +48,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Query(() => [CarBrand])
 	public async getCarBrands(): Promise<CarBrand[]> {
-		console.log('Query: getCarBrands');
+		this.logger.log('Query: getCarBrands');
 		return await this.carBrandService.getCarBrands();
 	}
 
@@ -54,7 +56,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
 	public async updateCarBrand(@Args('input') input: CarBrandUpdate): Promise<CarBrand> {
-		console.log('Mutation: updateCarBrand');
+		this.logger.log('Mutation: updateCarBrand');
 		return await this.carBrandService.updateCarBrand(input);
 	}
 
@@ -62,7 +64,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
 	public async deleteCarBrandModel(@Args('input') input: CarBrandModelInput): Promise<CarBrand> {
-		console.log('Mutation: deleteCarBrandModel');
+		this.logger.log('Mutation: deleteCarBrandModel');
 		return await this.carBrandService.deleteCarBrandModel(input);
 	}
 
@@ -70,7 +72,7 @@ export class CarBrandResolver {
 	@UseGuards(RolesGuard)
 	@Mutation(() => CarBrand)
 	public async removeCarBrand(@Args('carBrandName') input: string): Promise<CarBrand> {
-		console.log('Mutation: removeCarBrand');
+		this.logger.log('Mutation: removeCarBrand');
 		return await this.carBrandService.removeCarBrand(input);
 	}
 }

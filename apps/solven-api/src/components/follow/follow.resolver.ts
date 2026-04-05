@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FollowService } from './follow.service';
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Follower, Followers, Followings } from '../../libs/dto/follow/follow';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
@@ -11,6 +11,8 @@ import { FollowInquiry } from '../../libs/dto/follow/follow.input';
 
 @Resolver()
 export class FollowResolver {
+	private readonly logger = new Logger(FollowResolver.name);
+
 	constructor(private readonly followService: FollowService) {}
 
 	@UseGuards(AuthGuard)
@@ -19,7 +21,7 @@ export class FollowResolver {
 		@Args('input') input: string, //
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Follower> {
-		console.log('Mutation: subscribe');
+		this.logger.log('Mutation: subscribe');
 		const followingId: ObjectId = shapeIntoMongoObjectId(input);
 		return await this.followService.subscribe(memberId, followingId);
 	}
@@ -30,7 +32,7 @@ export class FollowResolver {
 		@Args('input') input: string, //
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Follower> {
-		console.log('Mutation: unsubscribe');
+		this.logger.log('Mutation: unsubscribe');
 		const followingId: ObjectId = shapeIntoMongoObjectId(input);
 		return await this.followService.unsubscribe(memberId, followingId);
 	}
@@ -41,7 +43,7 @@ export class FollowResolver {
 		@Args('input') input: FollowInquiry, //
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Followings> {
-		console.log('Query: getMemberFollowings');
+		this.logger.log('Query: getMemberFollowings');
 		input.search.followerId = shapeIntoMongoObjectId(input.search.followerId);
 		return await this.followService.getMemberFollowings(memberId, input);
 	}
@@ -52,7 +54,7 @@ export class FollowResolver {
 		@Args('input') input: FollowInquiry, //
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Followings> {
-		console.log('Query: getMemberFollowers');
+		this.logger.log('Query: getMemberFollowers');
 		input.search.followingId = shapeIntoMongoObjectId(input.search.followingId);
 		return await this.followService.getMemberFollowers(memberId, input);
 	}

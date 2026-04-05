@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Like, MeLiked } from '../../libs/dto/like/like';
@@ -14,6 +14,8 @@ import { NotificationGroup, NotificationType } from '../../libs/enums/notificati
 
 @Injectable()
 export class LikeService {
+	private readonly logger = new Logger(LikeService.name);
+
 	constructor(
 		@InjectModel('Like') private readonly likeModel: Model<Like>,
 		private readonly notificationService: NotificationService,
@@ -67,12 +69,12 @@ export class LikeService {
 					receiverId: receiverId,
 				});
 			} catch (err) {
-				console.log('Error, likeService:', err.message);
+				this.logger.log('Error, likeService:', err.message);
 				throw new BadRequestException(Message.CREATE_FAILED);
 			}
 		}
 
-		console.log(` - Like modifier '${modifier}' - `);
+		this.logger.log(` - Like modifier '${modifier}' - `);
 		return modifier;
 	}
 
@@ -127,7 +129,7 @@ export class LikeService {
 			.exec();
 		const result: Cars = { list: [], metaCounter: data[0].metaCounter };
 		result.list = data[0].list.map((ele) => ele.favoriteCar);
-		console.log('result', result);
+		this.logger.log('result', result);
 
 		return result;
 	}

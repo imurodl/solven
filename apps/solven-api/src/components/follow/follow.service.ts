@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Follower, Followers, Following, Followings } from '../../libs/dto/follow/follow';
@@ -16,6 +16,8 @@ import { Member } from '../../libs/dto/member/member';
 
 @Injectable()
 export class FollowService {
+	private readonly logger = new Logger(FollowService.name);
+
 	constructor(
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
 		private memberService: MemberService,
@@ -44,7 +46,7 @@ export class FollowService {
 				followerId: followerId,
 			});
 		} catch (err) {
-			console.log('Err, Service.model:', err.message);
+			this.logger.log('Err, Service.model:', err.message);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Notice, Notices } from '../../libs/dto/notice/notice';
@@ -10,6 +10,8 @@ import { Message } from '../../libs/enums/common.enum';
 
 @Injectable()
 export class NoticeService {
+	private readonly logger = new Logger(NoticeService.name);
+
 	constructor(@InjectModel('Notice') private readonly noticeModel: Model<Notice>) {}
 
 	public async createNotice(memberId: ObjectId, input: NoticeInput): Promise<Notice> {
@@ -20,7 +22,7 @@ export class NoticeService {
 			});
 			return result;
 		} catch (err) {
-			console.log('Error, Service.createNotice:', err.message);
+			this.logger.log('Error, Service.createNotice:', err.message);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
@@ -79,7 +81,7 @@ export class NoticeService {
 
 			return result[0];
 		} catch (err) {
-			console.log('Error, Service.getAllNotices:', err.message);
+			this.logger.log('Error, Service.getAllNotices:', err.message);
 			throw new BadRequestException(Message.NO_DATA_FOUND);
 		}
 	}
@@ -96,7 +98,7 @@ export class NoticeService {
 			if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 			return result;
 		} catch (err) {
-			console.log('Error, Service.getNotice:', err.message);
+			this.logger.log('Error, Service.getNotice:', err.message);
 			throw new BadRequestException(Message.NO_DATA_FOUND);
 		}
 	}
@@ -118,7 +120,7 @@ export class NoticeService {
 			if (!result) throw new BadRequestException(Message.UPDATE_FAILED);
 			return result;
 		} catch (err) {
-			console.log('Error, Service.updateNotice:', err.message);
+			this.logger.log('Error, Service.updateNotice:', err.message);
 			throw new BadRequestException(Message.UPDATE_FAILED);
 		}
 	}
@@ -140,7 +142,7 @@ export class NoticeService {
 			if (!result) throw new BadRequestException(Message.REMOVE_FAILED);
 			return result;
 		} catch (err) {
-			console.log('Error, Service.removeNotice:', err.message);
+			this.logger.log('Error, Service.removeNotice:', err.message);
 			throw new BadRequestException(Message.REMOVE_FAILED);
 		}
 	}

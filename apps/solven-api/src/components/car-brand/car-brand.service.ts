@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CarBrand, CarBrandInput, CarBrandModelInput, CarBrandUpdate } from '../../libs/dto/car-brand/car-brand';
@@ -8,6 +8,8 @@ import { CarBrandStatus } from '../../libs/enums/car.enum';
 
 @Injectable()
 export class CarBrandService {
+	private readonly logger = new Logger(CarBrandService.name);
+
 	constructor(@InjectModel('CarBrand') private readonly carBrandModel: Model<CarBrand>) {}
 
 	public async getCarBrandByUser(input: string): Promise<CarBrand> {
@@ -42,7 +44,7 @@ export class CarBrandService {
 		try {
 			return await this.carBrandModel.create(createInput);
 		} catch (err) {
-			console.log('Error, carBrandService:', err);
+			this.logger.log('Error, carBrandService:', err);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
@@ -106,7 +108,7 @@ export class CarBrandService {
 				carBrandStatus: CarBrandStatus.DELETE,
 			})
 			.exec();
-		console.log('result:', result);
+		this.logger.log('result:', result);
 		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 
 		return result;

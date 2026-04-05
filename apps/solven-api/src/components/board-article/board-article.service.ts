@@ -1,5 +1,5 @@
 import { ViewInput } from '../../libs/dto/view/view.input';
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
 import { Model, ObjectId } from 'mongoose';
@@ -23,6 +23,8 @@ import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class BoardArticleService {
+	private readonly logger = new Logger(BoardArticleService.name);
+
 	constructor(
 		@InjectModel('BoardArticle') private readonly boardArticleModel: Model<BoardArticle>,
 		private readonly memberService: MemberService,
@@ -41,7 +43,7 @@ export class BoardArticleService {
 			});
 			return result;
 		} catch (err) {
-			console.log('Error, createBoardArticle, service model');
+			this.logger.log('Error, createBoardArticle, service model');
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
@@ -96,7 +98,7 @@ export class BoardArticleService {
 		if (input.search?.memberId) {
 			match.memberId = shapeIntoMongoObjectId(input.search.memberId);
 		}
-		console.log('Match:', match);
+		this.logger.log('Match:', match);
 
 		const result: BoardArticles[] = await this.boardArticleModel
 			.aggregate([
@@ -178,7 +180,7 @@ export class BoardArticleService {
 	}
 
 	public async updateBoardArticleByAdmin(input: BoardArticleUpdate): Promise<BoardArticle> {
-		let { _id, articleStatus } = input;
+		const { _id, articleStatus } = input;
 
 		const result: BoardArticle | null = await this.boardArticleModel
 			.findOneAndUpdate({ _id: _id, articleStatus: BoardArticleStatus.ACTIVE }, input, { new: true })
@@ -203,7 +205,7 @@ export class BoardArticleService {
 	}
 
 	public async boardArticleStatsEditor(input: StatisticModifier): Promise<BoardArticle | null> {
-		console.log('Executed!!!');
+		this.logger.log('Executed!!!');
 		const { _id, targetKey, modifier } = input;
 		return await this.boardArticleModel
 			.findOneAndUpdate({ _id }, { $inc: { [targetKey]: modifier } }, { new: true })

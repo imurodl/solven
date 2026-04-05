@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Comment, Comments } from '../../libs/dto/comment/comment';
@@ -17,6 +17,8 @@ import { NotificationGroup, NotificationType } from '../../libs/enums/notificati
 
 @Injectable()
 export class CommentService {
+	private readonly logger = new Logger(CommentService.name);
+
 	constructor(
 		@InjectModel('Comment') private readonly commentModel: Model<Comment>,
 		private memberService: MemberService,
@@ -132,7 +134,7 @@ export class CommentService {
 				);
 			}
 		} catch (err) {
-			console.log('Error, commentService:', err);
+			this.logger.log('Error, commentService:', err);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 

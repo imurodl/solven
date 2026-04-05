@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
@@ -19,6 +19,8 @@ import { lookupAuthMemberLiked } from '../../libs/config';
 
 @Injectable()
 export class MemberService {
+	private readonly logger = new Logger(MemberService.name);
+
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
@@ -39,7 +41,7 @@ export class MemberService {
 
 			return result;
 		} catch (err) {
-			console.log('Error, memberService:', err.message);
+			this.logger.log('Error, memberService:', err.message);
 			throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
 		}
 	}
@@ -150,7 +152,7 @@ export class MemberService {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
-		console.log('match', match);
+		this.logger.log('match', match);
 
 		const result: Members[] = await this.memberModel
 			.aggregate([
@@ -200,7 +202,7 @@ export class MemberService {
 		if (memberStatus) match.memberStatus = memberStatus;
 		if (memberType) match.memberType = memberType;
 		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
-		console.log('match', match);
+		this.logger.log('match', match);
 
 		const result = await this.memberModel
 			.aggregate([
@@ -228,7 +230,7 @@ export class MemberService {
 	}
 
 	public async memberStatsEditor(input: StatisticModifier): Promise<Member | null> {
-		console.log('input._id', typeof input._id);
+		this.logger.log('input._id', typeof input._id);
 		const { _id, targetKey, modifier } = input;
 		return await this.memberModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
 	}

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { AuthService } from '../auth/auth.service';
 import { ViewService } from '../view/view.service';
@@ -20,6 +20,8 @@ import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class CarService {
+	private readonly logger = new Logger(CarService.name);
+
 	constructor(
 		@InjectModel('Car') private readonly carModel: Model<Car>,
 		private viewService: ViewService,
@@ -37,7 +39,7 @@ export class CarService {
 			});
 			return result;
 		} catch (err) {
-			console.log('Error, carService:', err);
+			this.logger.log('Error, carService:', err);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
@@ -100,7 +102,7 @@ export class CarService {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		this.shapeMatchQuery(match, input);
-		console.log('match:', match);
+		this.logger.log('match:', match);
 
 		const result = await this.carModel
 			.aggregate([

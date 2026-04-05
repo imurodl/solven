@@ -32,6 +32,11 @@ export class MemberService {
 		try {
 			const result: Member = await this.memberModel.create(input);
 			result.accessToken = await this.authService.createToken(result);
+			result.refreshToken = await this.authService.createRefreshToken(result);
+
+			const hashedRefresh = await this.authService.hashPassword(result.refreshToken);
+			await this.memberModel.findByIdAndUpdate(result._id, { refreshToken: hashedRefresh }).exec();
+
 			return result;
 		} catch (err) {
 			console.log('Error, memberService:', err.message);
@@ -53,9 +58,44 @@ export class MemberService {
 		}
 		const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+
 		response.accessToken = await this.authService.createToken(response);
+		response.refreshToken = await this.authService.createRefreshToken(response);
+
+		const hashedRefresh = await this.authService.hashPassword(response.refreshToken);
+		await this.memberModel.findByIdAndUpdate(response._id, { refreshToken: hashedRefresh }).exec();
 
 		return response;
+	}
+
+	public async refreshToken(refreshTokenStr: string): Promise<Member> {
+		const payload = await this.authService.verifyRefreshToken(refreshTokenStr);
+		const memberId = payload._id;
+
+		const member: Member | null = await this.memberModel
+			.findOne({ _id: memberId, memberStatus: MemberStatus.ACTIVE })
+			.select('+refreshToken')
+			.exec();
+
+		if (!member || !member.refreshToken) {
+			throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		}
+
+		const isValid = await this.authService.comparePasswords(refreshTokenStr, member.refreshToken);
+		if (!isValid) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		member.accessToken = await this.authService.createToken(member);
+		member.refreshToken = await this.authService.createRefreshToken(member);
+
+		const hashedRefresh = await this.authService.hashPassword(member.refreshToken);
+		await this.memberModel.findByIdAndUpdate(memberId, { refreshToken: hashedRefresh }).exec();
+
+		return member;
+	}
+
+	public async logout(memberId: ObjectId): Promise<boolean> {
+		await this.memberModel.findByIdAndUpdate(memberId, { refreshToken: null }).exec();
+		return true;
 	}
 
 	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {

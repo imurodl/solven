@@ -7,7 +7,7 @@ import { CarOptions } from './enums/car.enum';
 export const availableAgentSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews', 'memberRank'];
 export const availableMemberSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews'];
 
-export const availableOptions = ["carBarter, 'carRent"];
+export const availableOptions = ['carBarter', 'carRent'];
 export const availableCarOptions = Object.values(CarOptions);
 export const availableCarSorts = ['createdAt', 'carRank', 'carViews', 'carLikes', 'carPrice', 'updatedAt'];
 

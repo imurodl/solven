@@ -111,6 +111,12 @@ const MemberSchema = new Schema(
 			default: 0,
 		},
 
+		refreshToken: {
+			type: String,
+			select: false,
+			default: null,
+		},
+
 		deletedAt: {
 			type: Date,
 		},

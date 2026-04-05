@@ -32,6 +32,19 @@ export class MemberResolver {
 		return await this.memberService.login(input);
 	}
 
+	@Mutation(() => Member)
+	public async refreshToken(@Args('refreshToken') refreshToken: string): Promise<Member> {
+		console.log('Mutation: refreshToken');
+		return await this.memberService.refreshToken(refreshToken);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => Boolean)
+	public async logout(@AuthMember('_id') memberId: ObjectId): Promise<boolean> {
+		console.log('Mutation: logout');
+		return await this.memberService.logout(memberId);
+	}
+
 	@UseGuards(AuthGuard)
 	@Mutation(() => Member)
 	public async updateMember(

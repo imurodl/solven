@@ -48,7 +48,7 @@ export class BatchService {
 		const promisedList = agents.map(async (ele: Member) => {
 			const { _id, memberArticles, memberViews, memberLikes, memberCars } = ele;
 			const rank = memberCars * 5 + memberArticles * 3 + memberLikes * 2 + memberViews * 1;
-			return await this.carModel.findByIdAndUpdate(_id, { carRank: rank });
+			return await this.memberModel.findByIdAndUpdate(_id, { memberRank: rank });
 		});
 		await Promise.all(promisedList);
 	}

@@ -37,8 +37,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 30m
           script: |
             cd /home/max/solven-project/solven
             git fetch origin master
             git reset --hard origin/master
-            docker compose up -d --force-recreate solven-api solven-batch
+            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml up -d

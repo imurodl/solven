@@ -1,0 +1,36 @@
+services:
+  solven-api:
+    container_name: solven-api
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 4007:3007
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./uploads:/usr/src/solven/uploads
+    networks:
+      - monorepo-network
+    command: node dist/apps/solven-api/main
+
+  solven-batch:
+    container_name: solven-batch
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 4008:3008
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - monorepo-network
+    command: node dist/apps/solven-batch/main
+
+networks:
+  monorepo-network:
+    driver: bridge

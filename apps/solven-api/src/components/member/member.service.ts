@@ -1,4 +1,12 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	InternalServerErrorException,
+	Logger,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
@@ -55,12 +63,12 @@ export class MemberService {
 			.exec();
 
 		if (!response || response.memberStatus === MemberStatus.DELETE) {
-			throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
+			throw new NotFoundException(Message.NO_MEMBER_NICK);
 		} else if (response.memberStatus === MemberStatus.BLOCK) {
-			throw new InternalServerErrorException(Message.BLOCKED_USER);
+			throw new ForbiddenException(Message.BLOCKED_USER);
 		}
 		const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
-		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		if (!isMatch) throw new UnauthorizedException(Message.WRONG_PASSWORD);
 
 		response.accessToken = await this.authService.createToken(response);
 		response.refreshToken = await this.authService.createRefreshToken(response);

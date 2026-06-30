@@ -1,13 +1,15 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { Message } from 'apps/solven-api/src/libs/enums/common.enum';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+	private readonly logger = new Logger(AuthGuard.name);
+
 	constructor(private authService: AuthService) {}
 
 	async canActivate(context: ExecutionContext | any): Promise<boolean> {
-		console.info('--- @guard() Authentication [AuthGuard] ---');
+		this.logger.debug('--- @guard() Authentication [AuthGuard] ---');
 
 		if (context.contextType === 'graphql') {
 			const request = context.getArgByIndex(2).req;
@@ -19,7 +21,7 @@ export class AuthGuard implements CanActivate {
 				authMember = await this.authService.verifyToken(token);
 			if (!authMember) throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
 
-			console.log('memberNick[auth] =>', authMember.memberNick);
+			this.logger.debug(`memberNick[auth] => ${authMember.memberNick}`);
 			request.body.authMember = authMember;
 
 			return true;

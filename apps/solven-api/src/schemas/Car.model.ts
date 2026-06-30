@@ -161,4 +161,9 @@ CarSchema.index(
 	{ unique: true },
 );
 
+// Query indexes for public car search (every public query filters by carStatus)
+CarSchema.index({ carStatus: 1, createdAt: -1 });
+CarSchema.index({ carStatus: 1, carPrice: 1 });
+CarSchema.index({ memberId: 1, carStatus: 1 });
+
 export default CarSchema;

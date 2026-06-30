@@ -30,6 +30,7 @@ export class MemberService {
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
+		if (input.memberType === MemberType.ADMIN) input.memberType = MemberType.USER;
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		try {
 			const result: Member = await this.memberModel.create(input);

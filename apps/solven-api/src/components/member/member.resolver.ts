@@ -14,6 +14,7 @@ import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../..
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
+import * as path from 'path';
 import { Message } from '../../libs/enums/common.enum';
 
 @Resolver()
@@ -119,6 +120,15 @@ export class MemberResolver {
 	}
 
 	/** UPLOADER **/
+	private safeUploadPath(target: string, imageName: string): string {
+		const uploadsRoot = path.resolve('./uploads');
+		const resolved = path.resolve(uploadsRoot, target ?? '', imageName);
+		if (resolved !== path.join(uploadsRoot, path.basename(target ?? ''), imageName)) {
+			throw new Error(Message.UPLOAD_FAILED);
+		}
+		return path.join('uploads', path.basename(target ?? ''), imageName);
+	}
+
 	@UseGuards(AuthGuard)
 	@Mutation((returns) => String)
 	public async imageUploader(
@@ -165,7 +175,7 @@ export class MemberResolver {
 				if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
 
 				const imageName = getSerialForImage(filename);
-				const url = `uploads/${target}/${imageName}`;
+				const url = this.safeUploadPath(target, imageName);
 				const stream = createReadStream();
 
 				const result = await new Promise((resolve, reject) => {

@@ -1,11 +1,15 @@
 import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { Server } from 'ws';
 import * as WebSocket from 'ws';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
 import * as url from 'url';
 import { NotificationService } from '../components/notification/notification.service';
+
+const CHAT_HISTORY_LIMIT = 20;
 
 interface GuestUser {
 	id: string;
@@ -53,6 +57,7 @@ export class SocketGateway implements OnGatewayInit {
 		private authService: AuthService,
 		@Inject(forwardRef(() => NotificationService))
 		private notificationService: NotificationService,
+		@InjectModel('ChatMessage') private readonly chatMessageModel: Model<any>,
 	) {}
 
 	@WebSocketServer()
@@ -99,7 +104,7 @@ export class SocketGateway implements OnGatewayInit {
 			action: 'joined',
 		};
 		this.emitMessage(infoMsg);
-		client.send(JSON.stringify({ event: 'getMessages', list: this.messagesList }));
+		this.sendChatHistory(client);
 
 		// Only handle notifications for authenticated users
 		if (!('isGuest' in user)) {
@@ -212,7 +217,38 @@ export class SocketGateway implements OnGatewayInit {
 		this.messagesList.push(newMessage);
 		if (this.messagesList.length >= 5) this.messagesList.splice(0, this.messagesList.length - 5);
 
+		this.persistMessage(newMessage);
 		this.emitMessage(newMessage);
+	}
+
+	// Persist chat messages so history survives restarts. Fail-open: a DB error
+	// must never break live delivery, so errors are only logged.
+	private async persistMessage(message: MessagePayload): Promise<void> {
+		try {
+			await this.chatMessageModel.create({ text: message.text, memberData: message.memberData });
+		} catch (err: any) {
+			this.logger.error(`persistMessage failed: ${err?.message}`);
+		}
+	}
+
+	// Send the most recent persisted messages to a newly connected client.
+	// Falls back to the in-memory buffer if the DB read fails.
+	private async sendChatHistory(client: WebSocket): Promise<void> {
+		let list = this.messagesList;
+		try {
+			const docs = await this.chatMessageModel
+				.find()
+				.sort({ createdAt: -1 })
+				.limit(CHAT_HISTORY_LIMIT)
+				.lean()
+				.exec();
+			list = docs.reverse().map((doc: any) => ({ event: 'message', text: doc.text, memberData: doc.memberData }));
+		} catch (err: any) {
+			this.logger.error(`sendChatHistory failed, using in-memory buffer: ${err?.message}`);
+		}
+		if (client.readyState === WebSocket.OPEN) {
+			client.send(JSON.stringify({ event: 'getMessages', list }));
+		}
 	}
 
 	private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {

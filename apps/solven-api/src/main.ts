@@ -9,6 +9,9 @@ import { WsAdapter } from '@nestjs/platform-ws';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
+	// Trust the single nginx hop so req.ip reflects the real client IP (X-Forwarded-For)
+	// rather than the proxy address — required for correct per-IP rate limiting.
+	app.getHttpAdapter().getInstance().set('trust proxy', 1);
 	// Security headers. CSP is disabled (this is a JSON/GraphQL API, not an HTML host)
 	// and CORP is cross-origin so uploaded car images can be embedded by the frontend.
 	app.use(

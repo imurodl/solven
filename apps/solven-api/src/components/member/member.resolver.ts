@@ -12,6 +12,8 @@ import { ObjectId } from 'mongoose';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../../libs/config';
 import { WithoutGuard } from '../auth/guards/without.guard';
+import { Throttle } from '@nestjs/throttler';
+import { GqlThrottlerGuard } from '../auth/guards/gql-throttler.guard';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
 import * as path from 'path';
@@ -23,12 +25,16 @@ export class MemberResolver {
 
 	constructor(private readonly memberService: MemberService) {}
 
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	@UseGuards(GqlThrottlerGuard)
 	@Mutation(() => Member)
 	public async signup(@Args('input') input: MemberInput): Promise<Member> {
 		this.logger.log('Mutation: signup');
 		return await this.memberService.signup(input);
 	}
 
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
+	@UseGuards(GqlThrottlerGuard)
 	@Mutation(() => Member)
 	public async login(@Args('input') input: LoginInput): Promise<Member> {
 		this.logger.log('Mutation: login');

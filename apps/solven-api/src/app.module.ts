@@ -9,10 +9,13 @@ import { ComponentsModule } from './components/components.module';
 import { DatabaseModule } from './database/database.module';
 import { T } from './libs/types/common';
 import { SocketModule } from './socket/socket.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot(),
+		// Rate limiting is opt-in per-resolver (no global APP_GUARD) — only auth mutations use it.
+		ThrottlerModule.forRoot([{ ttl: 60000, limit: 20 }]),
 		GraphQLModule.forRoot({
 			driver: ApolloDriver,
 			playground: process.env.NODE_ENV !== 'production',

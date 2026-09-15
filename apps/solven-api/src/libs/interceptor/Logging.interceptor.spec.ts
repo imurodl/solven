@@ -25,4 +25,23 @@ describe('LoggingInterceptor redact', () => {
 		expect(output[1]).toBe('plain');
 		expect(output[2]).toBe(5);
 	});
+
+	it('survives circular references and unwraps mongoose-like documents', () => {
+		const circular: any = { name: 'a' };
+		circular.self = circular;
+		const docLike = { toObject: () => ({ carTitle: 'x', memberPassword: 'p', when: new Date(0) }) };
+
+		const output = (interceptor as any).redact({ circular, docLike });
+
+		expect(output.circular.self).toBe('[Circular]');
+		expect(output.docLike.carTitle).toBe('x');
+		expect(output.docLike.memberPassword).toBe('[REDACTED]');
+		expect(output.docLike.when).toBeInstanceOf(Date);
+	});
+
+	it('bounds recursion depth', () => {
+		let deep: any = { v: 1 };
+		for (let i = 0; i < 20; i++) deep = { child: deep };
+		expect(() => (interceptor as any).redact(deep)).not.toThrow();
+	});
 });

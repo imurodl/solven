@@ -9,6 +9,10 @@ import { FollowModule } from './follow/follow.module';
 import { BoardArticleModule } from './board-article/board-article.module';
 import { CarBrandModule } from './car-brand/car-brand.module';
 import { NoticeModule } from './notice/notice.module';
+import { ReviewModule } from './review/review.module';
+import { CouponModule } from './coupon/coupon.module';
+import { OrderModule } from './order/order.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
 	imports: [
@@ -22,6 +26,10 @@ import { NoticeModule } from './notice/notice.module';
 		FollowModule,
 		CarBrandModule,
 		NoticeModule,
+		ReviewModule,
+		CouponModule,
+		OrderModule,
+		MessageModule,
 	],
 })
 export class ComponentsModule {}

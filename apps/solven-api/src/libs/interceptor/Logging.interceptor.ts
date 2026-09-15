@@ -37,12 +37,19 @@ export class LoggingInterceptor implements NestInterceptor {
 
 	// Deep-copy the payload with any password-bearing key masked so credentials
 	// never reach stdout (login/signup mutations carry memberPassword in the body).
-	private redact(value: any): any {
-		if (Array.isArray(value)) return value.map((item) => this.redact(item));
+	// Mongoose documents are unwrapped with toObject() and the walk is bounded
+	// (depth + seen-set) so circular internals can never overflow the stack.
+	private redact(value: any, depth = 0, seen: WeakSet<object> = new WeakSet()): any {
+		if (value instanceof Date) return value;
+		if (Array.isArray(value)) return depth > 6 ? '[...]' : value.map((item) => this.redact(item, depth + 1, seen));
 		if (value && typeof value === 'object') {
+			if (typeof value.toObject === 'function') value = value.toObject();
+			if (seen.has(value)) return '[Circular]';
+			if (depth > 6) return '[...]';
+			seen.add(value);
 			const result: any = {};
 			for (const key of Object.keys(value)) {
-				result[key] = /password/i.test(key) ? '[REDACTED]' : this.redact(value[key]);
+				result[key] = /password/i.test(key) ? '[REDACTED]' : this.redact(value[key], depth + 1, seen);
 			}
 			return result;
 		}

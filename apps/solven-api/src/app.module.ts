@@ -28,7 +28,11 @@ const graphqlLogger = new Logger('GraphQL');
 				// Optional by design: REFRESH_SECRET falls back to SECRET_TOKEN+'_refresh',
 				// and MONGO_DEV is unset in prod (which selects MONGO_PROD via NODE_ENV).
 				REFRESH_SECRET: Joi.string().optional(),
-				MONGO_PROD: Joi.string().required(),
+				MONGO_PROD: Joi.string().when('NODE_ENV', {
+					is: 'production',
+					then: Joi.required(),
+					otherwise: Joi.optional(),
+				}),
 				MONGO_DEV: Joi.string().optional(),
 				PORT_API: Joi.number().default(3007),
 				PORT_BATCH: Joi.number().default(3008),
@@ -50,7 +54,7 @@ const graphqlLogger = new Logger('GraphQL');
 				AI_DAILY_LIMIT_ANON: Joi.number().optional(),
 				DEMO_ORDER_FLOW: Joi.string().optional().allow(''),
 				ORDER_DEPOSIT_RATE: Joi.number().optional(),
-			}),
+			}).or('MONGO_DEV', 'MONGO_PROD'),
 		}),
 		// Global rate limit (300 req/min per IP) via APP_GUARD; auth mutations and
 		// uploads tighten this with per-resolver @Throttle overrides.

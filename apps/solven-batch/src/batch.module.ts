@@ -7,6 +7,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import CarSchema from 'apps/solven-api/src/schemas/Car.model';
 import MemberSchema from 'apps/solven-api/src/schemas/Member.model';
+import ServiceJobSchema from 'apps/solven-api/src/schemas/ServiceJob.model';
 
 @Module({
 	imports: [
@@ -15,6 +16,7 @@ import MemberSchema from 'apps/solven-api/src/schemas/Member.model';
 		ScheduleModule.forRoot(),
 		MongooseModule.forFeature([{ name: 'Car', schema: CarSchema }]),
 		MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]),
+		MongooseModule.forFeature([{ name: 'ServiceJob', schema: ServiceJobSchema }]),
 	],
 	controllers: [BatchController],
 	providers: [BatchService],

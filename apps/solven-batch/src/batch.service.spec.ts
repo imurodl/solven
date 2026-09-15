@@ -18,6 +18,14 @@ describe('BatchService', () => {
 				BatchService,
 				{ provide: getModelToken('Car'), useValue: carModel },
 				{ provide: getModelToken('Member'), useValue: memberModel },
+				{
+					provide: getModelToken('ServiceJob'),
+					useValue: {
+						updateMany: jest.fn().mockReturnValue({ exec: jest.fn() }),
+						find: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }),
+						bulkWrite: jest.fn(),
+					},
+				},
 			],
 		}).compile();
 

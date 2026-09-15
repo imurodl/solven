@@ -31,6 +31,7 @@ describe('LikeService', () => {
 				{ provide: getModelToken('Car'), useValue: carModel },
 				{ provide: getModelToken('BoardArticle'), useValue: boardArticleModel },
 				{ provide: getModelToken('Member'), useValue: memberModel },
+				{ provide: getModelToken('ServiceJob'), useValue: { findById: jest.fn() } },
 			],
 		}).compile();
 

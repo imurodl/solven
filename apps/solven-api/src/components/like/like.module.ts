@@ -6,6 +6,7 @@ import { NotificationModule } from '../notification/notification.module';
 import CarSchema from '../../schemas/Car.model';
 import BoardArticleSchema from '../../schemas/BoardArticle.model';
 import MemberSchema from '../../schemas/Member.model';
+import ServiceJobSchema from '../../schemas/ServiceJob.model';
 
 @Module({
 	imports: [
@@ -14,6 +15,7 @@ import MemberSchema from '../../schemas/Member.model';
 			{ name: 'Car', schema: CarSchema },
 			{ name: 'BoardArticle', schema: BoardArticleSchema },
 			{ name: 'Member', schema: MemberSchema },
+			{ name: 'ServiceJob', schema: ServiceJobSchema },
 		]),
 		NotificationModule,
 	],

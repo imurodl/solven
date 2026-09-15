@@ -22,6 +22,7 @@ export class LikeService {
 		@InjectModel('Car') private readonly carModel: Model<any>,
 		@InjectModel('BoardArticle') private readonly boardArticleModel: Model<any>,
 		@InjectModel('Member') private readonly memberModel: Model<any>,
+		@InjectModel('ServiceJob') private readonly serviceJobModel: Model<any>,
 	) {}
 
 	public async toggleLike(input: LikeInput): Promise<number> {
@@ -58,6 +59,12 @@ export class LikeService {
 					}
 				} else if (input.likeGroup === LikeGroup.MEMBER) {
 					notificationDesc = `${likerName} liked your profile`;
+				} else if (input.likeGroup === LikeGroup.SERVICE_JOB) {
+					const job = await this.serviceJobModel.findById(input.likeRefId).exec();
+					if (job) {
+						receiverId = job.memberId.toString();
+						notificationDesc = `${likerName} liked your service "${job.serviceTitle}"`;
+					}
 				}
 
 				await this.notificationService.createNotification({
@@ -86,6 +93,8 @@ export class LikeService {
 				return NotificationGroup.ARTICLE;
 			case LikeGroup.MEMBER:
 				return NotificationGroup.MEMBER;
+			case LikeGroup.SERVICE_JOB:
+				return NotificationGroup.SERVICE_JOB;
 			default:
 				return NotificationGroup.MEMBER;
 		}

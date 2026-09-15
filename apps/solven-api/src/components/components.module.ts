@@ -14,6 +14,8 @@ import { CouponModule } from './coupon/coupon.module';
 import { OrderModule } from './order/order.module';
 import { MessageModule } from './message/message.module';
 import { OAuthModule } from './oauth/oauth.module';
+import { AiModule } from './ai/ai.module';
+import { ServiceJobModule } from './service-job/service-job.module';
 
 @Module({
 	imports: [
@@ -32,6 +34,8 @@ import { OAuthModule } from './oauth/oauth.module';
 		OrderModule,
 		MessageModule,
 		OAuthModule,
+		AiModule,
+		ServiceJobModule,
 	],
 })
 export class ComponentsModule {}

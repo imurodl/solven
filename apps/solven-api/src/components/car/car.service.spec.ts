@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { ViewService } from '../view/view.service';
 import { MemberService } from '../member/member.service';
 import { LikeService } from '../like/like.service';
+import { TranslationService } from '../translation/translation.service';
 import { CarStatus } from '../../libs/enums/car.enum';
 import { Direction } from '../../libs/enums/common.enum';
 
@@ -41,6 +42,7 @@ describe('CarService', () => {
 				{ provide: ViewService, useValue: viewService },
 				{ provide: MemberService, useValue: memberService },
 				{ provide: LikeService, useValue: likeService },
+				{ provide: TranslationService, useValue: { translate: jest.fn().mockResolvedValue(null) } },
 			],
 		}).compile();
 

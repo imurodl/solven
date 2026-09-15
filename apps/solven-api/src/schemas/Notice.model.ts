@@ -25,6 +25,12 @@ const NoticeSchema = new Schema(
 			required: true,
 		},
 
+		// Machine translations { en: {title, desc}, kr, ru, uz } — additive, source text wins when absent.
+		noticeTranslations: {
+			type: Schema.Types.Mixed,
+			default: {},
+		},
+
 		memberId: {
 			type: Schema.Types.ObjectId,
 			required: true,

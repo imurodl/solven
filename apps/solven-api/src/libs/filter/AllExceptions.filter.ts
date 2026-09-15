@@ -23,6 +23,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 		const ctx = host.switchToHttp();
 		const res = ctx.getResponse();
+		// A guard may already have redirected (e.g. unconfigured OAuth provider).
+		if (res?.headersSent) return;
 		const status = isHttp ? (exception as HttpException).getStatus() : 500;
 		const body = isHttp
 			? (exception as HttpException).getResponse()

@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { TranslationService } from '../translation/translation.service';
 import { Model, ObjectId } from 'mongoose';
 import { Notice, Notices } from '../../libs/dto/notice/notice';
 import { NoticeInput, NoticeUpdate } from '../../libs/dto/notice/notice.input';
@@ -12,7 +13,20 @@ import { Message } from '../../libs/enums/common.enum';
 export class NoticeService {
 	private readonly logger = new Logger(NoticeService.name);
 
-	constructor(@InjectModel('Notice') private readonly noticeModel: Model<Notice>) {}
+	constructor(
+		@InjectModel('Notice') private readonly noticeModel: Model<Notice>,
+		private readonly translationService: TranslationService,
+	) {}
+
+	private translateInBackground(noticeId: ObjectId, title: string, content?: string): void {
+		this.translationService
+			.translate('notice', title, content)
+			.then((translations) => {
+				if (!translations) return;
+				return this.noticeModel.findByIdAndUpdate(noticeId, { noticeTranslations: translations }).exec();
+			})
+			.catch((err) => this.logger.warn(`notice translation failed: ${err?.message}`));
+	}
 
 	public async createNotice(memberId: ObjectId, input: NoticeInput): Promise<Notice> {
 		try {
@@ -20,6 +34,7 @@ export class NoticeService {
 				...input,
 				memberId,
 			});
+			this.translateInBackground(result._id, result.noticeTitle, result.noticeContent);
 			return result;
 		} catch (err) {
 			this.logger.log('Error, Service.createNotice:', err.message);
@@ -116,6 +131,9 @@ export class NoticeService {
 					{ new: true },
 				)
 				.exec();
+			if (result && (input.noticeTitle !== undefined || input.noticeContent !== undefined)) {
+				this.translateInBackground(result._id, result.noticeTitle, result.noticeContent);
+			}
 
 			if (!result) throw new BadRequestException(Message.UPDATE_FAILED);
 			return result;

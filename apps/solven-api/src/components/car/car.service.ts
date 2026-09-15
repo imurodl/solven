@@ -17,6 +17,7 @@ import { buildSearchRegex, lookupAuthMemberLiked, lookupMember, shapeIntoMongoOb
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { TranslationService } from '../translation/translation.service';
 
 @Injectable()
 export class CarService {
@@ -27,7 +28,20 @@ export class CarService {
 		private viewService: ViewService,
 		private memberService: MemberService,
 		private likeService: LikeService,
+		private translationService: TranslationService,
 	) {}
+
+	// Translations are produced after the write so a slow/failed provider never
+	// delays or breaks the mutation; the frontend falls back to the source text.
+	public translateInBackground(carId: ObjectId, title: string, desc?: string): void {
+		this.translationService
+			.translate('car', title, desc)
+			.then((translations) => {
+				if (!translations) return;
+				return this.carModel.findByIdAndUpdate(carId, { carTranslations: translations }).exec();
+			})
+			.catch((err) => this.logger.warn(`car translation failed: ${err?.message}`));
+	}
 
 	public async createCar(input: CarInput): Promise<Car> {
 		try {
@@ -37,6 +51,7 @@ export class CarService {
 				targetKey: 'memberCars',
 				modifier: 1,
 			});
+			this.translateInBackground(result._id, result.carTitle, result.carDesc);
 			return result;
 		} catch (err) {
 			this.logger.log('Error, carService:', err);
@@ -92,6 +107,9 @@ export class CarService {
 				targetKey: 'memberCars',
 				modifier: -1,
 			});
+		}
+		if (input.carTitle !== undefined || input.carDesc !== undefined) {
+			this.translateInBackground(result._id, result.carTitle, result.carDesc);
 		}
 
 		return result;
@@ -302,6 +320,17 @@ export class CarService {
 		}
 
 		return result;
+	}
+
+	public async retranslateCar(carId: ObjectId): Promise<Car> {
+		const car: Car | null = await this.carModel.findById(carId).lean().exec();
+		if (!car) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		const translations = await this.translationService.translate('car', car.carTitle, car.carDesc);
+		if (!translations) throw new BadRequestException(Message.AI_NOT_CONFIGURED);
+		const result = await this.carModel
+			.findByIdAndUpdate(carId, { carTranslations: translations }, { new: true })
+			.exec();
+		return result as Car;
 	}
 
 	public async removeCarByAdmin(carId: string): Promise<Car> {

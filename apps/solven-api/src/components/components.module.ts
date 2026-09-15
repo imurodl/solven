@@ -13,6 +13,7 @@ import { ReviewModule } from './review/review.module';
 import { CouponModule } from './coupon/coupon.module';
 import { OrderModule } from './order/order.module';
 import { MessageModule } from './message/message.module';
+import { OAuthModule } from './oauth/oauth.module';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { MessageModule } from './message/message.module';
 		CouponModule,
 		OrderModule,
 		MessageModule,
+		OAuthModule,
 	],
 })
 export class ComponentsModule {}

@@ -77,6 +77,19 @@ export const getAllowedOrigins = (): string[] => {
 	return Array.from(new Set(fromEnv));
 };
 
+// Public base URL of this API (used for OAuth redirects that must stay on the API
+// host, where the Google callback and httpOnly cookies live). Derived from the
+// Google callback URL when API_PUBLIC_URL is not set.
+export const getApiPublicUrl = (): string => {
+	if (process.env.API_PUBLIC_URL) return process.env.API_PUBLIC_URL.replace(/\/$/, '');
+	try {
+		if (process.env.GOOGLE_CALLBACK_URL) return new URL(process.env.GOOGLE_CALLBACK_URL).origin;
+	} catch {
+		// fall through
+	}
+	return `http://localhost:${process.env.PORT_API || 3007}`;
+};
+
 // The frontend origin to redirect to after OAuth (first https origin in production).
 export const getFrontendUrl = (): string => {
 	const origins = getAllowedOrigins();

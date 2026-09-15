@@ -20,6 +20,7 @@ import { buildSearchRegex, lookupAuthMemberLiked, lookupMember, shapeIntoMongoOb
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { TranslationService } from '../translation/translation.service';
 
 @Injectable()
 export class BoardArticleService {
@@ -30,7 +31,18 @@ export class BoardArticleService {
 		private readonly memberService: MemberService,
 		private readonly viewService: ViewService,
 		private readonly likeService: LikeService,
+		private readonly translationService: TranslationService,
 	) {}
+
+	private translateInBackground(articleId: ObjectId, title: string, content?: string): void {
+		this.translationService
+			.translate('article', title, content)
+			.then((translations) => {
+				if (!translations) return;
+				return this.boardArticleModel.findByIdAndUpdate(articleId, { articleTranslations: translations }).exec();
+			})
+			.catch((err) => this.logger.warn(`article translation failed: ${err?.message}`));
+	}
 
 	public async createBoardArticle(memberId: ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
 		input.memberId = memberId;
@@ -41,6 +53,7 @@ export class BoardArticleService {
 				targetKey: 'memberArticles',
 				modifier: 1,
 			});
+			this.translateInBackground(result._id, result.articleTitle, result.articleContent);
 			return result;
 		} catch (err) {
 			this.logger.log('Error, createBoardArticle, service model');
@@ -84,6 +97,9 @@ export class BoardArticleService {
 
 		if (articleStatus === BoardArticleStatus.DELETE) {
 			await this.memberService.memberStatsEditor({ _id: memberId, targetKey: 'memberArticles', modifier: -1 });
+		}
+		if (input.articleTitle !== undefined || input.articleContent !== undefined) {
+			this.translateInBackground(result._id, result.articleTitle, result.articleContent);
 		}
 
 		return result;

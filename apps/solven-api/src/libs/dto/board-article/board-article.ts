@@ -1,4 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Translations } from '../common/translations';
 import { BoardArticleCategory, BoardArticleStatus } from '../../enums/board-article.enum';
 import { ObjectId } from 'mongoose';
 import { Member, TotalCounter } from '../member/member';
@@ -32,6 +33,9 @@ export class BoardArticle {
 
 	@Field(() => Int)
 	articleComments: number;
+
+	@Field(() => Translations, { nullable: true })
+	articleTranslations?: Translations;
 
 	@Field(() => String)
 	memberId: ObjectId;

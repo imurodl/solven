@@ -9,6 +9,7 @@ import { ComponentsModule } from './components/components.module';
 import { DatabaseModule } from './database/database.module';
 import { T } from './libs/types/common';
 import { SocketModule } from './socket/socket.module';
+import { TranslationModule } from './components/translation/translation.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { GqlThrottlerGuard } from './components/auth/guards/gql-throttler.guard';
@@ -86,6 +87,7 @@ const graphqlLogger = new Logger('GraphQL');
 				};
 			},
 		}),
+		TranslationModule,
 		ComponentsModule, // http connection
 		DatabaseModule,
 		SocketModule, // tcp connection

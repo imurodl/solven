@@ -39,6 +39,12 @@ const BoardArticleSchema = new Schema(
 			default: 0,
 		},
 
+		// Machine translations { en: {title, desc}, kr, ru, uz } — additive, source text wins when absent.
+		articleTranslations: {
+			type: Schema.Types.Mixed,
+			default: {},
+		},
+
 		articleComments: {
 			type: Number,
 			default: 0,

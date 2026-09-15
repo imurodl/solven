@@ -31,7 +31,7 @@ describe('CommentService', () => {
 	});
 
 	describe('updateComment', () => {
-		it('updates only the owner\'s active comment and returns the result', async () => {
+		it("updates only the owner's active comment and returns the result", async () => {
 			const updated = { _id: 'c1', commentContent: 'edited' };
 			commentModel.findOneAndUpdate.mockReturnValue(execWith(updated));
 
@@ -70,9 +70,7 @@ describe('CommentService', () => {
 		it('throws when the comment to remove does not exist', async () => {
 			commentModel.findByIdAndDelete.mockReturnValue(execWith(null));
 
-			await expect(service.removeCommentByAdmin('missing' as any)).rejects.toBeInstanceOf(
-				InternalServerErrorException,
-			);
+			await expect(service.removeCommentByAdmin('missing' as any)).rejects.toBeInstanceOf(InternalServerErrorException);
 		});
 	});
 });

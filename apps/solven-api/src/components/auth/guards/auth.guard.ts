@@ -1,4 +1,11 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	CanActivate,
+	ExecutionContext,
+	Injectable,
+	Logger,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { GqlContextType } from '@nestjs/graphql';
 import { AuthService } from '../auth.service';
 import { Message } from 'apps/solven-api/src/libs/enums/common.enum';

@@ -16,6 +16,7 @@ import { MessageModule } from './message/message.module';
 import { OAuthModule } from './oauth/oauth.module';
 import { AiModule } from './ai/ai.module';
 import { ServiceJobModule } from './service-job/service-job.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
 	imports: [
@@ -36,6 +37,7 @@ import { ServiceJobModule } from './service-job/service-job.module';
 		OAuthModule,
 		AiModule,
 		ServiceJobModule,
+		ActivityModule,
 	],
 })
 export class ComponentsModule {}

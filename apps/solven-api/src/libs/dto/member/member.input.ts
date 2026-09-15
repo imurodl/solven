@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsIn, IsNotEmpty, IsOptional, Length, Max, Min } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, Length, Max, Min } from 'class-validator';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
 import { availableAgentSorts, availableMemberSorts } from '../../config';
 import { Direction } from '../../enums/common.enum';
@@ -17,11 +17,17 @@ export class MemberInput {
 	memberPassword: string;
 
 	@IsNotEmpty()
+	@Length(7, 20)
 	@Field(() => String)
 	memberPhone: string;
 
 	@IsOptional()
-	@IsIn([MemberType.USER, MemberType.AGENT])
+	@IsEmail()
+	@Field(() => String, { nullable: true })
+	memberEmail?: string;
+
+	@IsOptional()
+	@IsIn([MemberType.USER, MemberType.AGENT, MemberType.MECHANIC])
 	@Field(() => MemberType, { nullable: true })
 	memberType?: MemberType;
 
@@ -52,6 +58,34 @@ class AISearch {
 
 @InputType()
 export class AgentsInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Max(1000)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Max(100)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableAgentSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => AISearch)
+	search: AISearch;
+}
+
+@InputType()
+export class MechanicsInquiry {
 	@IsNotEmpty()
 	@Min(1)
 	@Max(1000)

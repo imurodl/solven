@@ -1,7 +1,9 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, Length, Max, Min } from 'class-validator';
 import {
+	CarAvailability,
 	CarColor,
+	CarCondition,
 	CarFuelType,
 	CarLocation,
 	CarOptions,
@@ -87,7 +89,7 @@ export class CarInput {
 	manufacturedAt: number;
 
 	@IsOptional()
-	@Length(5, 500)
+	@Length(5, 3000)
 	@Field(() => String, { nullable: true })
 	carDesc?: string;
 
@@ -98,6 +100,40 @@ export class CarInput {
 	@IsOptional()
 	@Field(() => Boolean, { nullable: true })
 	carRent?: boolean;
+
+	@IsOptional()
+	@Min(0)
+	@Field(() => Number, { nullable: true })
+	carSalePrice?: number;
+
+	@IsOptional()
+	@Field(() => Boolean, { nullable: true })
+	carIsOnSale?: boolean;
+
+	@IsOptional()
+	@Field(() => Date, { nullable: true })
+	carSaleStartsAt?: Date;
+
+	@IsOptional()
+	@Field(() => Date, { nullable: true })
+	carSaleExpiresAt?: Date;
+
+	@IsOptional()
+	@Field(() => CarCondition, { nullable: true })
+	carCondition?: CarCondition;
+
+	@IsOptional()
+	@Length(11, 17)
+	@Field(() => String, { nullable: true })
+	carVin?: string;
+
+	@IsOptional()
+	@Field(() => [String], { nullable: true })
+	carImageCredits?: string[];
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	car3dModel?: string;
 
 	memberId?: ObjectId;
 }
@@ -189,6 +225,18 @@ class CarsISearch {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	text?: string;
+
+	@IsOptional()
+	@Field(() => Boolean, { nullable: true })
+	carIsOnSale?: boolean;
+
+	@IsOptional()
+	@Field(() => [CarCondition], { nullable: true })
+	conditionList?: CarCondition[];
+
+	@IsOptional()
+	@Field(() => [CarAvailability], { nullable: true })
+	availabilityList?: CarAvailability[];
 }
 
 @InputType()

@@ -4,6 +4,7 @@ export enum MemberType {
 	USER = 'USER',
 	AGENT = 'AGENT',
 	ADMIN = 'ADMIN',
+	MECHANIC = 'MECHANIC',
 }
 registerEnumType(MemberType, { name: 'MemberType' });
 
@@ -18,5 +19,6 @@ export enum MemberAuthType {
 	PHONE = 'PHONE',
 	EMAIL = 'EMAIL',
 	TELEGRAM = 'TELEGRAM',
+	GOOGLE = 'GOOGLE',
 }
 registerEnumType(MemberAuthType, { name: 'MemberAuthType' });

@@ -43,4 +43,19 @@ export class NotificationInput {
 	@IsMongoId()
 	@IsOptional()
 	articleId?: string;
+
+	@Field(() => String, { nullable: true })
+	@IsMongoId()
+	@IsOptional()
+	orderId?: string;
+
+	@Field(() => String, { nullable: true })
+	@IsMongoId()
+	@IsOptional()
+	serviceJobId?: string;
+
+	@Field(() => String, { nullable: true })
+	@IsString()
+	@IsOptional()
+	conversationId?: string;
 }

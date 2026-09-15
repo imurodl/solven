@@ -29,6 +29,12 @@ export class NotificationService {
 			type: notification.notificationType,
 			status: notification.notificationStatus,
 			createdAt: notification.createdAt,
+			carId: notification.carId?.toString(),
+			articleId: notification.articleId?.toString(),
+			orderId: notification.orderId?.toString(),
+			serviceJobId: notification.serviceJobId?.toString(),
+			conversationId: notification.conversationId,
+			authorId: notification.authorId?.toString(),
 		});
 
 		return notification;

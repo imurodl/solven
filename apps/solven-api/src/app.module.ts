@@ -10,6 +10,9 @@ import { DatabaseModule } from './database/database.module';
 import { T } from './libs/types/common';
 import { SocketModule } from './socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { GqlThrottlerGuard } from './components/auth/guards/gql-throttler.guard';
+import * as depthLimit from 'graphql-depth-limit';
 import * as Joi from 'joi';
 
 // Fail fast at boot when critical secrets are missing (a blank SECRET_TOKEN
@@ -29,16 +32,40 @@ const graphqlLogger = new Logger('GraphQL');
 				MONGO_DEV: Joi.string().optional(),
 				PORT_API: Joi.number().default(3007),
 				PORT_BATCH: Joi.number().default(3008),
+				// Every integration below is optional: the owning service becomes a
+				// no-op when its key is absent, so a missing key never breaks boot.
+				FRONTEND_URL: Joi.string().optional(),
+				SESSION_SECRET: Joi.string().optional(),
+				GOOGLE_CLIENT_ID: Joi.string().optional().allow(''),
+				GOOGLE_CLIENT_SECRET: Joi.string().optional().allow(''),
+				GOOGLE_CALLBACK_URL: Joi.string().optional().allow(''),
+				TELEGRAM_BOT_TOKEN: Joi.string().optional().allow(''),
+				ADMIN_TELEGRAM_CHAT_ID: Joi.string().optional().allow(''),
+				RESEND_API_KEY: Joi.string().optional().allow(''),
+				MAIL_FROM: Joi.string().optional().allow(''),
+				GROQ_API_KEY: Joi.string().optional().allow(''),
+				GEMINI_API_KEY: Joi.string().optional().allow(''),
+				GEMINI_MODEL: Joi.string().optional().allow(''),
+				AI_DAILY_LIMIT_MEMBER: Joi.number().optional(),
+				AI_DAILY_LIMIT_ANON: Joi.number().optional(),
+				DEMO_ORDER_FLOW: Joi.string().optional().allow(''),
+				ORDER_DEPOSIT_RATE: Joi.number().optional(),
 			}),
 		}),
-		// Rate limiting is opt-in per-resolver (no global APP_GUARD) — only auth mutations use it.
-		ThrottlerModule.forRoot([{ ttl: 60000, limit: 20 }]),
+		// Global rate limit (300 req/min per IP) via APP_GUARD; auth mutations and
+		// uploads tighten this with per-resolver @Throttle overrides.
+		ThrottlerModule.forRoot([{ name: 'default', ttl: 60000, limit: 300 }]),
 		GraphQLModule.forRoot({
 			driver: ApolloDriver,
 			playground: process.env.NODE_ENV !== 'production',
 			introspection: process.env.NODE_ENV !== 'production',
 			uploads: false,
 			autoSchemaFile: true,
+			// Base64 photo payloads for the AI photo finder exceed the 100kb default.
+			bodyParserConfig: { limit: '15mb' },
+			// Deeply nested queries are the cheapest GraphQL DoS; 8 covers every real query here.
+			validationRules: [depthLimit(8)],
+			context: ({ req, res }: { req: T; res: T }) => ({ req, res }),
 			formatError: (error: T) => {
 				const code = error?.extensions?.code;
 				const message =
@@ -56,9 +83,10 @@ const graphqlLogger = new Logger('GraphQL');
 			},
 		}),
 		ComponentsModule, // http connection
-		DatabaseModule, SocketModule, // tcp connection
+		DatabaseModule,
+		SocketModule, // tcp connection
 	],
 	controllers: [AppController],
-	providers: [AppService, AppResolver],
+	providers: [AppService, AppResolver, { provide: APP_GUARD, useClass: GqlThrottlerGuard }],
 })
 export class AppModule {}

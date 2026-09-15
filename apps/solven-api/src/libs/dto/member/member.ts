@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
 import { ObjectId } from 'mongoose';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
 import { MeLiked } from '../like/like';
@@ -18,8 +18,11 @@ export class Member {
 	@Field(() => MemberAuthType)
 	memberAuthType: MemberAuthType;
 
-	@Field(() => String)
-	memberPhone: string;
+	@Field(() => String, { nullable: true })
+	memberPhone?: string;
+
+	@Field(() => String, { nullable: true })
+	memberEmail?: string;
 
 	@Field(() => String)
 	memberNick: string;
@@ -37,6 +40,21 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	memberDesc?: string;
+
+	@Field(() => Float, { nullable: true })
+	memberRating?: number;
+
+	@Field(() => Int, { nullable: true })
+	memberReviews?: number;
+
+	@Field(() => Int, { nullable: true })
+	memberServiceJobs?: number;
+
+	@Field(() => Boolean, { nullable: true })
+	hasTelegram?: boolean;
+
+	@Field(() => Boolean, { nullable: true })
+	hasGoogle?: boolean;
 
 	@Field(() => Int)
 	memberCars: number;

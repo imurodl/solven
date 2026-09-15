@@ -1,7 +1,13 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MemberService } from './member.service';
 import { InternalServerErrorException, Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import {
+	AgentsInquiry,
+	LoginInput,
+	MechanicsInquiry,
+	MemberInput,
+	MembersInquiry,
+} from '../../libs/dto/member/member.input';
 import { Member, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
@@ -10,14 +16,12 @@ import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ObjectId } from 'mongoose';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
-import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../../libs/config';
+import { shapeIntoMongoObjectId } from '../../libs/config';
+import { assertUploadTarget, saveImageUpload, saveModelUpload } from '../../libs/upload';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { Throttle } from '@nestjs/throttler';
 import { GqlThrottlerGuard } from '../auth/guards/gql-throttler.guard';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
-import { createWriteStream } from 'fs';
-import * as path from 'path';
-import { Message } from '../../libs/enums/common.enum';
 
 @Resolver()
 export class MemberResolver {
@@ -66,6 +70,13 @@ export class MemberResolver {
 	}
 
 	@UseGuards(AuthGuard)
+	@Query(() => Member)
+	public async getMyProfile(@AuthMember('_id') memberId: ObjectId): Promise<Member> {
+		this.logger.log('Query: getMyProfile');
+		return await this.memberService.getMyProfile(memberId);
+	}
+
+	@UseGuards(AuthGuard)
 	@Query(() => String)
 	public async checkAuth(@AuthMember('memberNick') memberNick: string): Promise<string> {
 		this.logger.log('Query: checkAuth');
@@ -73,7 +84,7 @@ export class MemberResolver {
 		return `Hi ${memberNick}!`;
 	}
 
-	@Roles(MemberType.USER, MemberType.AGENT)
+	@Roles(MemberType.USER, MemberType.AGENT, MemberType.MECHANIC)
 	@UseGuards(RolesGuard)
 	@Query(() => String)
 	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
@@ -94,6 +105,16 @@ export class MemberResolver {
 	public async getAgents(@Args('input') input: AgentsInquiry, @AuthMember('_id') memberId: ObjectId): Promise<Members> {
 		this.logger.log('Query: getAgents');
 		return await this.memberService.getAgents(memberId, input);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query(() => Members)
+	public async getMechanics(
+		@Args('input') input: MechanicsInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Members> {
+		this.logger.log('Query: getMechanics');
+		return await this.memberService.getMechanics(memberId, input);
 	}
 
 	@Throttle({ default: { limit: 60, ttl: 60000 } })
@@ -127,42 +148,16 @@ export class MemberResolver {
 	}
 
 	/** UPLOADER **/
-	private safeUploadPath(target: string, imageName: string): string {
-		const uploadsRoot = path.resolve('./uploads');
-		const resolved = path.resolve(uploadsRoot, target ?? '', imageName);
-		if (resolved !== path.join(uploadsRoot, path.basename(target ?? ''), imageName)) {
-			throw new Error(Message.UPLOAD_FAILED);
-		}
-		return path.join('uploads', path.basename(target ?? ''), imageName);
-	}
-
 	@Throttle({ default: { limit: 20, ttl: 60000 } })
 	@UseGuards(AuthGuard, GqlThrottlerGuard)
 	@Mutation((returns) => String)
 	public async imageUploader(
 		@Args({ name: 'file', type: () => GraphQLUpload })
-		{ createReadStream, filename, mimetype }: FileUpload,
+		file: FileUpload,
 		@Args('target') target: string,
 	): Promise<string> {
 		this.logger.log('Mutation: imageUploader');
-
-		if (!filename) throw new Error(Message.UPLOAD_FAILED);
-		const validMime = validMimeTypes.includes(mimetype);
-		if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
-
-		const imageName = getSerialForImage(filename);
-		const url = `uploads/${target}/${imageName}`;
-		const stream = createReadStream();
-
-		const result = await new Promise((resolve, reject) => {
-			stream
-				.pipe(createWriteStream(url))
-				.on('finish', async () => resolve(true))
-				.on('error', () => reject(false));
-		});
-		if (!result) throw new Error(Message.UPLOAD_FAILED);
-
-		return url;
+		return await saveImageUpload(file, target);
 	}
 
 	@Throttle({ default: { limit: 20, ttl: 60000 } })
@@ -174,34 +169,30 @@ export class MemberResolver {
 		@Args('target') target: string,
 	): Promise<string[]> {
 		this.logger.log('Mutation: imagesUploader');
+		assertUploadTarget(target);
 
 		const uploadedImages: string[] = [];
-		const promisedList = files.map(async (img: Promise<FileUpload>, index: number): Promise<Promise<void>> => {
-			try {
-				const { filename, mimetype, encoding, createReadStream } = await img;
+		await Promise.all(
+			files.map(async (img: Promise<FileUpload>, index: number): Promise<void> => {
+				try {
+					uploadedImages[index] = await saveImageUpload(await img, target);
+				} catch (err: any) {
+					this.logger.warn(`imagesUploader: file ${index} skipped (${err?.message})`);
+				}
+			}),
+		);
+		return uploadedImages.filter(Boolean);
+	}
 
-				const validMime = validMimeTypes.includes(mimetype);
-				if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
-
-				const imageName = getSerialForImage(filename);
-				const url = this.safeUploadPath(target, imageName);
-				const stream = createReadStream();
-
-				const result = await new Promise((resolve, reject) => {
-					stream
-						.pipe(createWriteStream(url))
-						.on('finish', () => resolve(true))
-						.on('error', () => reject(false));
-				});
-				if (!result) throw new Error(Message.UPLOAD_FAILED);
-
-				uploadedImages[index] = url;
-			} catch (err) {
-				this.logger.log('Error, file missing!');
-			}
-		});
-
-		await Promise.all(promisedList);
-		return uploadedImages;
+	@Roles(MemberType.AGENT, MemberType.ADMIN)
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	@UseGuards(RolesGuard, GqlThrottlerGuard)
+	@Mutation((returns) => String)
+	public async modelUploader(
+		@Args({ name: 'file', type: () => GraphQLUpload })
+		file: FileUpload,
+	): Promise<string> {
+		this.logger.log('Mutation: modelUploader');
+		return await saveModelUpload(file);
 	}
 }

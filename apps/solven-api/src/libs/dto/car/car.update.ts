@@ -1,7 +1,17 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsInt, IsNotEmpty, IsOptional, Length, Max, Min } from 'class-validator';
 import { ObjectId } from 'mongoose';
-import { CarColor, CarFuelType, CarLocation, CarOptions, CarStatus, CarTransmission, CarType } from '../../enums/car.enum';
+import {
+	CarAvailability,
+	CarColor,
+	CarCondition,
+	CarFuelType,
+	CarLocation,
+	CarOptions,
+	CarStatus,
+	CarTransmission,
+	CarType,
+} from '../../enums/car.enum';
 
 @InputType()
 export class CarUpdate {
@@ -68,7 +78,7 @@ export class CarUpdate {
 	carImages?: string[];
 
 	@IsOptional()
-	@Length(5, 500)
+	@Length(5, 3000)
 	@Field(() => String, { nullable: true })
 	carDesc?: string;
 
@@ -79,6 +89,52 @@ export class CarUpdate {
 	@IsOptional()
 	@Field(() => Boolean, { nullable: true })
 	carRent?: boolean;
+
+	@IsOptional()
+	@Min(0)
+	@Field(() => Number, { nullable: true })
+	carSalePrice?: number;
+
+	@IsOptional()
+	@Field(() => Boolean, { nullable: true })
+	carIsOnSale?: boolean;
+
+	@IsOptional()
+	@Field(() => Date, { nullable: true })
+	carSaleStartsAt?: Date;
+
+	@IsOptional()
+	@Field(() => Date, { nullable: true })
+	carSaleExpiresAt?: Date;
+
+	@IsOptional()
+	@Field(() => CarAvailability, { nullable: true })
+	carAvailability?: CarAvailability;
+
+	@IsOptional()
+	@Field(() => CarCondition, { nullable: true })
+	carCondition?: CarCondition;
+
+	@IsOptional()
+	@Length(11, 17)
+	@Field(() => String, { nullable: true })
+	carVin?: string;
+
+	@IsOptional()
+	@Field(() => [String], { nullable: true })
+	carImageCredits?: string[];
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	car3dModel?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	carBrand?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	carModel?: string;
 
 	soldAt?: Date;
 

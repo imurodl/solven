@@ -110,7 +110,7 @@ describe('CarService', () => {
 			expect(match.carPrice).toEqual({ $gte: 1000, $lte: 5000 });
 			expect(match.carMileage).toEqual({ $gte: 0, $lte: 100000 });
 			expect(match.manufacturedAt).toEqual({ $gte: 2015, $lte: 2022 });
-			expect(match.carTitle.$regex).toBeInstanceOf(RegExp);
+			expect(match.carTitle).toBeInstanceOf(RegExp);
 			expect(match.carOptions).toEqual({ $all: ['carRent'] });
 			expect(match.$or).toEqual([{ carBarter: true }]);
 		});
@@ -128,9 +128,7 @@ describe('CarService', () => {
 		it('throws when the aggregation returns nothing', async () => {
 			carModel.aggregate.mockReturnValue(aggregateWith([]));
 
-			await expect(service.getCars(null as any, baseInput())).rejects.toBeInstanceOf(
-				InternalServerErrorException,
-			);
+			await expect(service.getCars(null as any, baseInput())).rejects.toBeInstanceOf(InternalServerErrorException);
 		});
 	});
 
@@ -138,9 +136,7 @@ describe('CarService', () => {
 		it('throws NO_DATA when the car is missing', async () => {
 			carModel.findOne.mockReturnValue({ lean: () => execWith(null) });
 
-			await expect(service.getCar(null as any, 'car-1' as any)).rejects.toBeInstanceOf(
-				InternalServerErrorException,
-			);
+			await expect(service.getCar(null as any, 'car-1' as any)).rejects.toBeInstanceOf(InternalServerErrorException);
 		});
 
 		it('does not record a view or check likes for an anonymous visitor', async () => {
@@ -165,11 +161,7 @@ describe('CarService', () => {
 			const result = await service.getCar('m1' as any, 'car-1' as any);
 
 			expect(viewService.recordView).toHaveBeenCalled();
-			expect(carModel.findByIdAndUpdate).toHaveBeenCalledWith(
-				'car-1',
-				{ $inc: { carViews: 1 } },
-				{ new: true },
-			);
+			expect(carModel.findByIdAndUpdate).toHaveBeenCalledWith('car-1', { $inc: { carViews: 1 } }, { new: true });
 			expect(result.carViews).toBe(5);
 			expect(result.meLiked).toEqual([{ myFavorite: true }]);
 		});
@@ -195,11 +187,7 @@ describe('CarService', () => {
 
 			const result = await service.likeTargetCar('m1' as any, 'car-1' as any);
 
-			expect(carModel.findByIdAndUpdate).toHaveBeenCalledWith(
-				'car-1',
-				{ $inc: { carLikes: 1 } },
-				{ new: true },
-			);
+			expect(carModel.findByIdAndUpdate).toHaveBeenCalledWith('car-1', { $inc: { carLikes: 1 } }, { new: true });
 			expect(result.carLikes).toBe(6);
 		});
 

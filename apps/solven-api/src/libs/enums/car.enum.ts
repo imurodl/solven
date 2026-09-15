@@ -95,7 +95,6 @@ export enum CarTransmission {
 }
 registerEnumType(CarTransmission, { name: 'CarTransmission' });
 
-
 export enum CarBrandStatus {
 	ACTIVE = 'ACTIVE',
 	PAUSED = 'PAUSED',
@@ -104,3 +103,16 @@ export enum CarBrandStatus {
 registerEnumType(CarBrandStatus, {
 	name: 'CarBrandStatus',
 });
+
+export enum CarAvailability {
+	AVAILABLE = 'AVAILABLE',
+	RESERVED = 'RESERVED',
+	SOLD = 'SOLD',
+}
+registerEnumType(CarAvailability, { name: 'CarAvailability' });
+
+export enum CarCondition {
+	NEW = 'NEW',
+	USED = 'USED',
+}
+registerEnumType(CarCondition, { name: 'CarCondition' });

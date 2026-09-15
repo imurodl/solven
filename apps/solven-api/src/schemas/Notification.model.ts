@@ -47,6 +47,20 @@ const NotificationSchema = new Schema(
 			ref: 'Car',
 		},
 
+		orderId: {
+			type: Schema.Types.ObjectId,
+			ref: 'Order',
+		},
+
+		serviceJobId: {
+			type: Schema.Types.ObjectId,
+			ref: 'ServiceJob',
+		},
+
+		conversationId: {
+			type: String,
+		},
+
 		articleId: {
 			type: Schema.Types.ObjectId,
 			ref: 'BoardArticle',

@@ -33,6 +33,15 @@ export class Notification {
 	@Field(() => String, { nullable: true })
 	articleId?: string;
 
+	@Field(() => String, { nullable: true })
+	orderId?: string;
+
+	@Field(() => String, { nullable: true })
+	serviceJobId?: string;
+
+	@Field(() => String, { nullable: true })
+	conversationId?: string;
+
 	@Field()
 	createdAt: Date;
 

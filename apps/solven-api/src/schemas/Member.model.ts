@@ -24,7 +24,12 @@ const MemberSchema = new Schema(
 		memberPhone: {
 			type: String,
 			index: { unique: true, sparse: true },
-			required: true,
+			required: false,
+		},
+
+		memberEmail: {
+			type: String,
+			index: { unique: true, sparse: true },
 		},
 
 		memberNick: {
@@ -36,7 +41,7 @@ const MemberSchema = new Schema(
 		memberPassword: {
 			type: String,
 			select: false,
-			required: true,
+			required: false,
 		},
 
 		memberFullName: {
@@ -109,6 +114,31 @@ const MemberSchema = new Schema(
 		memberBlocks: {
 			type: Number,
 			default: 0,
+		},
+
+		memberRating: {
+			type: Number,
+			default: 0,
+		},
+
+		memberReviews: {
+			type: Number,
+			default: 0,
+		},
+
+		memberServiceJobs: {
+			type: Number,
+			default: 0,
+		},
+
+		memberTelegramId: {
+			type: String,
+			index: { unique: true, sparse: true },
+		},
+
+		memberGoogleId: {
+			type: String,
+			index: { unique: true, sparse: true },
 		},
 
 		refreshToken: {

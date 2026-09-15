@@ -13,7 +13,7 @@ import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { CarUpdate } from '../../libs/dto/car/car.update';
 import * as moment from 'moment';
-import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { buildSearchRegex, lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
@@ -143,9 +143,23 @@ export class CarService {
 			mileageRange,
 			yearRange,
 			text,
+			carIsOnSale,
+			conditionList,
+			availabilityList,
 		} = input.search;
 
+		// Hot deals: only cars whose sale window is currently open. Cars without a
+		// start date (older records) count as started.
+		if (carIsOnSale) {
+			const now = new Date();
+			match.carIsOnSale = true;
+			match.carSaleExpiresAt = { $gt: now };
+			match.$and = [{ $or: [{ carSaleStartsAt: { $lte: now } }, { carSaleStartsAt: null }] }];
+		}
+
 		if (memberId) match.memberId = shapeIntoMongoObjectId(memberId);
+		if (conditionList && conditionList.length) match.carCondition = { $in: conditionList };
+		if (availabilityList && availabilityList.length) match.carAvailability = { $in: availabilityList };
 		if (locationList && locationList.length) match.carLocation = { $in: locationList };
 		if (brandList && brandList.length) match.carBrand = { $in: brandList };
 		if (modelList && modelList.length) match.carModel = { $in: modelList };
@@ -162,7 +176,7 @@ export class CarService {
 				$lte: yearRange.end,
 			};
 
-		if (text) match.carTitle = { $regex: new RegExp(text, 'i') };
+		if (text) match.carTitle = buildSearchRegex(text);
 
 		if (carListingOptions?.length) {
 			match.carOptions = { $all: carListingOptions };

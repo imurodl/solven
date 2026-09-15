@@ -39,6 +39,12 @@ interface NotificationPayload {
 	type: string;
 	status: string;
 	createdAt: Date;
+	carId?: string;
+	articleId?: string;
+	orderId?: string;
+	serviceJobId?: string;
+	conversationId?: string;
+	authorId?: string;
 }
 
 interface MarkReadPayload {
@@ -132,6 +138,12 @@ export class SocketGateway implements OnGatewayInit {
 							type: notification.notificationType,
 							status: notification.notificationStatus,
 							createdAt: notification.createdAt,
+							carId: notification.carId?.toString(),
+							articleId: notification.articleId?.toString(),
+							orderId: notification.orderId?.toString(),
+							serviceJobId: notification.serviceJobId?.toString(),
+							conversationId: notification.conversationId,
+							authorId: notification.authorId?.toString(),
 						})),
 					}),
 				);
@@ -236,12 +248,7 @@ export class SocketGateway implements OnGatewayInit {
 	private async sendChatHistory(client: WebSocket): Promise<void> {
 		let list = this.messagesList;
 		try {
-			const docs = await this.chatMessageModel
-				.find()
-				.sort({ createdAt: -1 })
-				.limit(CHAT_HISTORY_LIMIT)
-				.lean()
-				.exec();
+			const docs = await this.chatMessageModel.find().sort({ createdAt: -1 }).limit(CHAT_HISTORY_LIMIT).lean().exec();
 			list = docs.reverse().map((doc: any) => ({ event: 'message', text: doc.text, memberData: doc.memberData }));
 		} catch (err: any) {
 			this.logger.error(`sendChatHistory failed, using in-memory buffer: ${err?.message}`);
@@ -263,6 +270,17 @@ export class SocketGateway implements OnGatewayInit {
 		this.server.clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify(message));
+			}
+		});
+	}
+
+	// Push an arbitrary event to every open socket of one member (used for direct
+	// messages and order updates so the UI refreshes without polling).
+	public emitToMember(userId: string, event: string, payload: unknown): void {
+		this.server.clients.forEach((client) => {
+			const user = this.clientsMap.get(client);
+			if (client.readyState === WebSocket.OPEN && user && !('isGuest' in user) && user._id.toString() === userId) {
+				client.send(JSON.stringify({ event, payload }));
 			}
 		});
 	}

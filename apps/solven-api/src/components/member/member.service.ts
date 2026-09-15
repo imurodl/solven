@@ -10,7 +10,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
-import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import {
+	AgentsInquiry,
+	LoginInput,
+	MechanicsInquiry,
+	MemberInput,
+	MembersInquiry,
+} from '../../libs/dto/member/member.input';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
@@ -23,7 +29,7 @@ import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
 import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
-import { lookupAuthMemberLiked } from '../../libs/config';
+import { buildSearchRegex, lookupAuthMemberLiked } from '../../libs/config';
 
 @Injectable()
 export class MemberService {
@@ -119,6 +125,22 @@ export class MemberService {
 		return result;
 	}
 
+	// Full profile for the signed-in member, including the private fields that are
+	// deliberately kept out of the JWT payload.
+	public async getMyProfile(memberId: ObjectId): Promise<Member> {
+		const member: Member | null = await this.memberModel
+			.findOne({ _id: memberId, memberStatus: MemberStatus.ACTIVE })
+			.select('+memberTelegramId +memberGoogleId')
+			.lean()
+			.exec();
+		if (!member) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		member.hasTelegram = !!(member as T).memberTelegramId;
+		member.hasGoogle = !!(member as T).memberGoogleId;
+		delete (member as T).memberTelegramId;
+		delete (member as T).memberGoogleId;
+		return member;
+	}
+
 	public async getMember(memberId: ObjectId | null, targetId: ObjectId): Promise<Member> {
 		const search: T = {
 			_id: targetId,
@@ -156,11 +178,23 @@ export class MemberService {
 	}
 
 	public async getAgents(memberId: ObjectId, input: AgentsInquiry): Promise<Members> {
+		return this.getMembersByType(memberId, input, MemberType.AGENT);
+	}
+
+	public async getMechanics(memberId: ObjectId, input: MechanicsInquiry): Promise<Members> {
+		return this.getMembersByType(memberId, input, MemberType.MECHANIC);
+	}
+
+	private async getMembersByType(
+		memberId: ObjectId,
+		input: AgentsInquiry | MechanicsInquiry,
+		memberType: MemberType,
+	): Promise<Members> {
 		const { text } = input.search;
-		const match: T = { memberType: MemberType.AGENT, memberStatus: MemberStatus.ACTIVE };
+		const match: T = { memberType, memberStatus: MemberStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
-		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
+		if (text) match.memberNick = buildSearchRegex(text);
 		this.logger.log('match', match);
 
 		const result: Members[] = await this.memberModel
@@ -210,7 +244,7 @@ export class MemberService {
 
 		if (memberStatus) match.memberStatus = memberStatus;
 		if (memberType) match.memberType = memberType;
-		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
+		if (text) match.memberNick = buildSearchRegex(text);
 		this.logger.log('match', match);
 
 		const result = await this.memberModel

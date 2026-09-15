@@ -91,3 +91,18 @@ jobs:
           echo "$resp" | grep -q '"errors"' || { echo "::error::login did not return a GraphQL errors array"; exit 1; }
           echo "$resp" | grep -qi 'No member' || echo "::warning::login error message changed (non-fatal, but check masking)"
           echo "login error-path ok"
+
+      - name: Parity schema check (sale filter, reviews, mechanics)
+        run: |
+          resp=$(curl -s -X POST https://api.solven.uz/graphql \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"{getCars(input:{page:1,limit:1,search:{carIsOnSale:true}}){metaCounter{total}} getMechanics(input:{page:1,limit:1,search:{}}){metaCounter{total}} getAiStatus{priceCheck}}"}')
+          echo "response: $resp"
+          echo "$resp" | grep -q '"errors"' && { echo "::error::parity query returned errors"; exit 1; }
+          echo "parity schema ok"
+
+      - name: OAuth provider discovery
+        run: |
+          resp=$(curl -s https://api.solven.uz/auth/providers)
+          echo "providers: $resp"
+          echo "$resp" | grep -q 'google' || { echo "::error::/auth/providers missing"; exit 1; }

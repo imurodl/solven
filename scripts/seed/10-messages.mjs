@@ -17,13 +17,26 @@ export async function run() {
 	const r = rng(808);
 	const cars = stateEntries('car:').filter((c) => c.id);
 	if (!cars.length) return log('messages: no seeded cars');
+	// Conversations can only start on listings that are still active (sold cars reject messages).
+	const statusCache = new Map();
+	const isActive = async (car) => {
+		if (!statusCache.has(car.id)) {
+			const d = await gql('query($id:String!){getCar(carId:$id){carStatus}}', { id: car.id }).catch(() => null);
+			statusCache.set(car.id, d?.getCar?.carStatus === 'ACTIVE');
+		}
+		return statusCache.get(car.id);
+	};
 	let convs = 0, msgs = 0;
-	for (let i = 0; i < CONVERSATIONS; i++) {
+	for (let i = 0; i < CONVERSATIONS * 2 && convs < CONVERSATIONS; i++) {
 		const car = r.pick(cars);
 		const buyerNick = r.pick(USERS).nick;
 		const key = `conv:${buyerNick}|${car.key}`;
-		if (getState(key)) continue;
+		if (getState(key)) {
+			convs++;
+			continue;
+		}
 		if (isDry()) continue;
+		if (!(await isActive(car))) continue;
 		const buyer = await session(buyerNick);
 		const seller = await session(car.seller);
 		if (!buyer || !seller) continue;

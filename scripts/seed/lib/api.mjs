@@ -42,8 +42,9 @@ const EXPIRED = /jwt expired|NOT_AUTHENTICATED|Please login|Unauthorized|invalid
 const credsByToken = new Map();
 const HANDLER_INTERVALS = {
 	signup: 12200, login: 6200, imageUploader: 3100, imagesUploader: 3100, modelUploader: 12200,
-	createOrder: 6200, createReview: 6200, createComment: 4100, sendMessage: 3100, sendServiceRequest: 6200,
-	subscribe: 1100, unsubscribe: 1100, toggleReviewReaction: 1100, replyMessage: 1100, likeTargetMember: 1100,
+	createOrder: 6200, createReview: 6200, createComment: 4100, createBoardArticle: 6200,
+	sendMessage: 3100, sendServiceRequest: 6200, validateCoupon: 3100, estimateCarPrice: 2100,
+	subscribe: 1100, unsubscribe: 1100, toggleReviewReaction: 1100, replyMessage: 1100, likeTargetMember: 1100, likeTargetBoardArticle: 1100,
 };
 const lastCall = new Map();
 const operationOf = (query) => /(?:mutation|query)?[^{]*\{\s*(\w+)/.exec(query)?.[1];

@@ -10,6 +10,16 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 export class GqlThrottlerGuard extends ThrottlerGuard {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		if (context.getType<GqlContextType>() === 'ws') return true;
+		// The guard is registered globally (APP_GUARD) and again on handlers that
+		// carry a @Throttle override, so one request was counted twice and every
+		// limit was effectively halved. Count each request once per handler.
+		const { req } = this.getRequestResponse(context);
+		const handlerKey = `${context.getClass().name}.${context.getHandler().name}`;
+		if (req) {
+			const counted: Set<string> = (req.__throttleCounted ??= new Set());
+			if (counted.has(handlerKey)) return true;
+			counted.add(handlerKey);
+		}
 		return super.canActivate(context);
 	}
 

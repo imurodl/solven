@@ -59,3 +59,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 uploads
 
 essentials.txt
+
+# seed runtime data (credentials of seed accounts, photo cache)
+scripts/seed/state*.json
+scripts/seed/cache/

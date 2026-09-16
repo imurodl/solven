@@ -29,6 +29,8 @@ export const availableCarSorts = [
 	'carSoldCount',
 	'carMileage',
 	'manufacturedAt',
+	'carSaleExpiresAt',
+	'carSalePrice',
 ];
 
 export const availableArticleOptions = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];

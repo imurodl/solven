@@ -99,7 +99,18 @@ async function runDeal({ r, admin, car, buyerNick, outcome, index }) {
 			if (outcome === 'DELIVERED') return finish(stateKey, orderId, outcome);
 			if (admin && !car.soldPool) await step('mutation($id:String!){confirmOrder(orderId:$id,keepListing:true){_id}}', admin.token, 'COMPLETED');
 			else await step('mutation($id:String!){confirmOrder(orderId:$id){_id}}', buyer.token, 'COMPLETED');
-			if (outcome === 'RETURN_REQUESTED') await gql('mutation($id:String!){requestReturn(orderId:$id,reason:"Gearbox warning light on day two."){_id}}', { id: orderId }, buyer.token);
+			if (outcome === 'RETURN_REQUESTED') {
+				// A returned car gets its (bad) review while the deal is still COMPLETED.
+				const rating = r.pick([1, 2]);
+				const seller = AGENTS.find((a) => a.nick === car.seller);
+				try {
+					const d = await gql('mutation($i:ReviewInput!){createReview(input:$i){_id}}', { i: { carId: car.id, orderId, reviewRating: rating, reviewContent: fill(r.pick(REVIEWS[rating]), { model: car.model, seller: seller?.name || car.seller }) } }, buyer.token);
+					setState(`review:${buyerNick}|${car.key}`, { id: d.createReview._id, rating });
+				} catch (err) {
+					log(`deals: return review failed for ${car.title}: ${err.message}`);
+				}
+				await gql('mutation($id:String!){requestReturn(orderId:$id,reason:"Gearbox warning light on day two."){_id}}', { id: orderId }, buyer.token);
+			}
 		}
 	} catch (err) {
 		log(`deals: transition failed (${outcome}) for ${car.title}: ${err.message}`);

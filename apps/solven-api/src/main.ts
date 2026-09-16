@@ -18,7 +18,10 @@ process.on('unhandledRejection', (reason) => {
 	processLogger.error(`Unhandled Rejection: ${reason instanceof Error ? reason.stack : reason}`);
 });
 process.on('uncaughtException', (err) => {
+	// The process state is undefined after this; log and let Docker restart it
+	// rather than keep a half-dead instance (e.g. one that never bound its port).
 	processLogger.error(`Uncaught Exception: ${err.stack ?? err.message}`);
+	setTimeout(() => process.exit(1), 100).unref();
 });
 
 async function bootstrap() {

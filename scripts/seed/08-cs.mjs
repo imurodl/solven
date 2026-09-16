@@ -10,8 +10,11 @@ export async function run() {
 	}
 	const have = new Set();
 	for (const cat of ['NOTICE', 'FAQ', 'TERMS']) {
-		const d = await gql('query($i:AllNoticesInquiry!){getAllNotices(input:$i){list{noticeTitle noticeCategory}}}', { i: { page: 1, limit: 200, noticeCategory: cat } }, admin.token);
-		for (const n of d.getAllNotices.list) have.add(`${n.noticeCategory}|${n.noticeTitle}`);
+		for (let page = 1; page < 10; page++) {
+			const d = await gql('query($i:AllNoticesInquiry!){getAllNotices(input:$i){list{noticeTitle noticeCategory}}}', { i: { page, limit: 100, noticeCategory: cat } }, admin.token);
+			for (const n of d.getAllNotices.list) have.add(`${n.noticeCategory}|${n.noticeTitle}`);
+			if (d.getAllNotices.list.length < 100) break;
+		}
 	}
 	const items = [
 		...NOTICES.map((n) => ({ cat: 'NOTICE', title: n.title, content: n.content })),

@@ -58,11 +58,12 @@ export class OAuthController {
 	}
 
 	@Get('providers')
-	providers(): { google: boolean; telegram: boolean; telegramBot?: string } {
+	providers(): { google: boolean; telegram: boolean; telegramBot?: string; telegramBotId?: string } {
 		return {
 			google: isGoogleConfigured(),
 			telegram: this.telegramStrategy.isConfigured(),
 			telegramBot: process.env.TELEGRAM_BOT_NAME || undefined,
+			telegramBotId: this.telegramStrategy.botId(),
 		};
 	}
 

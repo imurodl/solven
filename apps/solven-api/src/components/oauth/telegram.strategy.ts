@@ -20,6 +20,13 @@ export class TelegramStrategy {
 		return !!process.env.TELEGRAM_BOT_TOKEN;
 	}
 
+	// The numeric bot id is the public prefix of the token; the login widget's
+	// popup API (Telegram.Login.auth) needs it instead of the bot username.
+	public botId(botToken = process.env.TELEGRAM_BOT_TOKEN): string | undefined {
+		const id = botToken?.split(':')[0];
+		return id && /^\d+$/.test(id) ? id : undefined;
+	}
+
 	// Verifies the HMAC that the Telegram login widget signs with SHA256(botToken).
 	public verify(data: TelegramAuthData, botToken = process.env.TELEGRAM_BOT_TOKEN, now = Date.now()): boolean {
 		if (!botToken || !data || typeof data !== 'object') return false;

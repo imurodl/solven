@@ -39,3 +39,16 @@ describe('TelegramStrategy.verify', () => {
 		expect(strategy.verify({ ...base, hash: 'zz' } as any, BOT, now)).toBe(false);
 	});
 });
+
+describe('TelegramStrategy.botId', () => {
+	const strategy = new TelegramStrategy();
+
+	it('is the numeric prefix of the bot token', () => {
+		expect(strategy.botId('123456789:AAExampleSecretPart')).toBe('123456789');
+	});
+
+	it('is undefined without a well-formed token', () => {
+		expect(strategy.botId(undefined)).toBeUndefined();
+		expect(strategy.botId('not-a-token')).toBeUndefined();
+	});
+});

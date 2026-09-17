@@ -60,9 +60,10 @@ export class CarService {
 	}
 
 	public async getCar(memberId: ObjectId, carId: ObjectId): Promise<Car> {
+		// Sold listings stay reachable (reviews, order history); only deleted ones vanish.
 		const search: T = {
 			_id: carId,
-			carStatus: CarStatus.ACTIVE,
+			carStatus: { $in: [CarStatus.ACTIVE, CarStatus.SOLD] },
 		};
 		const targetCar: Car | null = await this.carModel.findOne(search).lean().exec();
 		if (!targetCar) throw new InternalServerErrorException(Message.NO_DATA_FOUND);

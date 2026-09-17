@@ -141,6 +141,18 @@ describe('CarService', () => {
 			await expect(service.getCar(null as any, 'car-1' as any)).rejects.toBeInstanceOf(InternalServerErrorException);
 		});
 
+		it('looks up active and sold listings but never deleted ones', async () => {
+			carModel.findOne.mockReturnValue({ lean: () => execWith({ _id: 'car-1', carViews: 0, memberId: 'owner-1' }) });
+			memberService.getMember.mockResolvedValue({ _id: 'owner-1' });
+
+			await service.getCar(null as any, 'car-1' as any);
+
+			expect(carModel.findOne).toHaveBeenCalledWith({
+				_id: 'car-1',
+				carStatus: { $in: [CarStatus.ACTIVE, CarStatus.SOLD] },
+			});
+		});
+
 		it('does not record a view or check likes for an anonymous visitor', async () => {
 			carModel.findOne.mockReturnValue({ lean: () => execWith({ _id: 'car-1', carViews: 4, memberId: 'owner-1' }) });
 			memberService.getMember.mockResolvedValue({ _id: 'owner-1' });
